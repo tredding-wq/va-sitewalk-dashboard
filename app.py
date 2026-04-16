@@ -356,11 +356,13 @@ elif page == "Attendees":
     c1.metric("Attendees", len(df))
     c2.metric("Multi-site (2+)", int((df["sites_visited"].fillna(0) >= 2).sum()))
 
+    df["company_display"] = df["company"].fillna(df["organization"])
     st.dataframe(
-        df[["name", "email", "organization", "company", "times_seen",
+        df[["name", "email", "company_display", "times_seen",
             "sites_visited", "stations_visited", "last_seen"]],
         use_container_width=True, height=600,
         column_config={
+            "company_display": st.column_config.TextColumn("Company"),
             "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
             "sites_visited": st.column_config.NumberColumn("Sites", format="%d"),
             "stations_visited": st.column_config.TextColumn("Sites Visited", width="large"),
