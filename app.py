@@ -346,28 +346,25 @@ elif page == "Attendees":
     st.title("Attendee Directory")
     df = load_attendees()
 
-    col1, col2 = st.columns(2)
-    with col1:
-        search = st.text_input("Search (name, email, org)")
-    with col2:
-        min_sites = st.slider("Min sites visited", 0, 10, 0)
+    search = st.text_input("Search (name, email, org)")
 
     if search:
         mask = df.apply(lambda r: search.lower() in str(r).lower(), axis=1)
         df = df[mask]
-    if min_sites > 0:
-        df = df[df["sites_visited"].fillna(0) >= min_sites]
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     c1.metric("Attendees", len(df))
     c2.metric("Multi-site (2+)", int((df["sites_visited"].fillna(0) >= 2).sum()))
-    c3.metric("Multi-project (2+)", int((df["projects_attended"].fillna(0) >= 2).sum()))
 
     st.dataframe(
         df[["name", "email", "organization", "company", "times_seen",
-            "site_walks_attended", "sites_visited", "projects_attended",
-            "stations_visited", "project_numbers", "last_seen"]],
+            "sites_visited", "stations_visited", "last_seen"]],
         use_container_width=True, height=600,
+        column_config={
+            "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
+            "sites_visited": st.column_config.NumberColumn("Sites", format="%d"),
+            "stations_visited": st.column_config.TextColumn("Sites Visited", width="large"),
+        },
     )
 
     st.subheader("Top Multi-Site Attendees")
