@@ -137,7 +137,7 @@ def load_companies():
         LEFT JOIN (
             SELECT ka.company_id,
                    COUNT(DISTINCT ats.station_number) AS sites_count,
-                   GROUP_CONCAT(DISTINCT vs.station_name || ' (' || vs.city || ')', '; ') AS sites_list
+                   GROUP_CONCAT(DISTINCT vs.station_name || ' (' || vs.city || ')') AS sites_list
             FROM known_attendees ka
             JOIN attendee_sites ats ON ats.attendee_id = ka.id
             JOIN va_sites vs ON vs.station_number = ats.station_number
