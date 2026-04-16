@@ -357,8 +357,15 @@ elif page == "Attendees":
     st.title("Attendee Directory")
     df = load_attendees()
 
-    search = st.text_input("Search (name, email, org)")
+    # Compute derived columns first
+    df["company_display"] = df["company"].fillna(df["organization"])
+    df["sites_display"] = df["sites_visited"].fillna(0).astype(int)
+    no_sites = (df["sites_display"] == 0) & (df["stations_visited"].isna() | (df["stations_visited"] == ""))
+    has_first = no_sites & df["first_seen_site"].notna() & (df["first_seen_site"] != "")
+    df.loc[has_first, "sites_display"] = 1
+    df.loc[has_first, "stations_visited"] = df.loc[has_first, "first_seen_site"]
 
+    search = st.text_input("Search (name, email, org)")
     if search:
         mask = df.apply(lambda r: search.lower() in str(r).lower(), axis=1)
         df = df[mask]
@@ -366,13 +373,6 @@ elif page == "Attendees":
     c1, c2 = st.columns(2)
     c1.metric("Attendees", len(df))
     c2.metric("Multi-site (2+)", int((df["sites_display"] >= 2).sum()))
-
-    df["company_display"] = df["company"].fillna(df["organization"])
-    # Fallback: if no linked sites, count legacy sites_list entries
-    df["sites_display"] = df["sites_visited"].fillna(0).astype(int)
-    mask = (df["sites_display"] == 0) & (df["stations_visited"].isna() | (df["stations_visited"] == ""))
-    df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "sites_display"] = 1
-    df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "stations_visited"] = df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "first_seen_site"]
 
     st.dataframe(
         df[["name", "email", "company_display", "times_seen",
