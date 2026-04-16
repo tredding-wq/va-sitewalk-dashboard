@@ -365,25 +365,31 @@ elif page == "Attendees":
 
     c1, c2 = st.columns(2)
     c1.metric("Attendees", len(df))
-    c2.metric("Multi-site (2+)", int((df["sites_visited"].fillna(0) >= 2).sum()))
+    c2.metric("Multi-site (2+)", int((df["sites_display"] >= 2).sum()))
 
     df["company_display"] = df["company"].fillna(df["organization"])
+    # Fallback: if no linked sites, count legacy sites_list entries
+    df["sites_display"] = df["sites_visited"].fillna(0).astype(int)
+    mask = (df["sites_display"] == 0) & (df["stations_visited"].isna() | (df["stations_visited"] == ""))
+    df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "sites_display"] = 1
+    df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "stations_visited"] = df.loc[mask & df["first_seen_site"].notna() & (df["first_seen_site"] != ""), "first_seen_site"]
+
     st.dataframe(
         df[["name", "email", "company_display", "times_seen",
-            "sites_visited", "stations_visited", "last_seen"]],
+            "sites_display", "stations_visited", "last_seen"]],
         use_container_width=True, height=600,
         column_config={
             "company_display": st.column_config.TextColumn("Company"),
             "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
-            "sites_visited": st.column_config.NumberColumn("Sites", format="%d"),
+            "sites_display": st.column_config.NumberColumn("Sites", format="%d"),
             "stations_visited": st.column_config.TextColumn("Sites Visited", width="large"),
         },
     )
 
     st.subheader("Top Multi-Site Attendees")
-    multi = df[df["sites_visited"].fillna(0) >= 2].sort_values("sites_visited", ascending=False).head(20)
+    multi = df[df["sites_display"] >= 2].sort_values("sites_display", ascending=False).head(20)
     if not multi.empty:
-        fig = px.bar(multi, x="sites_visited", y="name", orientation="h",
+        fig = px.bar(multi, x="sites_display", y="name", orientation="h",
                      color="organization", height=500,
                      labels={"sites_visited": "Sites Visited"})
         fig.update_layout(yaxis=dict(autorange="reversed"), margin=dict(l=0, r=0, t=30, b=0))
