@@ -287,6 +287,7 @@ page = st.sidebar.radio("Navigate", [
     "Overview",
     "Sites",
     "Projects",
+    "Solicitations",
     "Attendees",
     "Companies",
     "Joint Ventures",
@@ -470,6 +471,92 @@ elif page == "Projects":
                 st.markdown(f"**Site Visit Dates:** {proj.get('site_visit_dates', '')}")
                 st.markdown(f"**Unique Attendees:** {int(proj.get('unique_attendees', 0) or 0)}")
                 st.markdown(f"**Sheets Processed:** {int(proj.get('total_sheets', 0) or 0)}")
+
+
+# ------------------------------------------------------------------ #
+#  Solicitations (EHRM Site-Walk Directory)
+# ------------------------------------------------------------------ #
+elif page == "Solicitations":
+    st.title("VA EHRM Solicitation Directory")
+    st.caption("SAM.gov opportunities with pre-bid site visits and sign-in sheet amendments. "
+               "Sourced from PCAC office 36C776 (plus regional offices) and curated against "
+               "HigherGov, BidNet, GovTribe, and GAO-26-108812.")
+
+    sols = query("""
+        SELECT visn, visn_name, facility, city, state, solicitation, project_number,
+               type, status, link_url, link_text, notes
+          FROM ehrm_solicitations
+         ORDER BY visn, facility
+    """)
+
+    STATUS_BADGE = {
+        "active":   ":green[active]",
+        "awarded":  ":violet[awarded]",
+        "closed":   ":gray[closed]",
+        "check":    ":orange[check]",
+        "deployed": ":blue[deployed]",
+    }
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Total rows", len(sols))
+    c2.metric("Active", int((sols["status"] == "active").sum()))
+    c3.metric("Awarded", int((sols["status"] == "awarded").sum()))
+    c4.metric("VISNs covered", sols["visn"].nunique())
+
+    f1, f2, f3 = st.columns(3)
+    with f1:
+        visn_filter = st.multiselect("VISN", sorted(sols["visn"].dropna().unique()))
+    with f2:
+        status_filter = st.multiselect("Status", sorted(sols["status"].dropna().unique()))
+    with f3:
+        state_filter = st.multiselect("State", sorted(sols["state"].dropna().unique()))
+
+    filtered = sols.copy()
+    if visn_filter:
+        filtered = filtered[filtered["visn"].isin(visn_filter)]
+    if status_filter:
+        filtered = filtered[filtered["status"].isin(status_filter)]
+    if state_filter:
+        filtered = filtered[filtered["state"].isin(state_filter)]
+
+    st.metric("Showing", f"{len(filtered)} solicitations")
+
+    # Build a display frame with markdown link + status badge
+    display = filtered.copy()
+    display["link"] = display.apply(
+        lambda r: f"[{r['link_text'] or 'link'}]({r['link_url']})" if r["link_url"] else "",
+        axis=1,
+    )
+    display["status_label"] = display["status"].map(STATUS_BADGE).fillna(display["status"])
+    display = display[[
+        "visn", "facility", "city", "state", "solicitation", "project_number",
+        "type", "status_label", "link", "notes",
+    ]].rename(columns={
+        "visn": "VISN", "facility": "Facility", "city": "City", "state": "State",
+        "solicitation": "Solicitation", "project_number": "Project #",
+        "type": "Type", "status_label": "Status", "link": "Link", "notes": "Notes",
+    })
+
+    st.dataframe(
+        display,
+        use_container_width=True,
+        height=560,
+        column_config={
+            "Link": st.column_config.LinkColumn("Link", display_text=r"\[([^\]]+)\].*"),
+        },
+    )
+
+    with st.expander("Status legend"):
+        st.markdown("""
+- :green[active] — solicitation open for bids or in review
+- :violet[awarded] — contract award recorded
+- :gray[closed] — solicitation closed (bid period ended)
+- :orange[check] — referenced in research, verify on SAM.gov
+- :blue[deployed] — site already on Oracle/Cerner EHR
+
+Gap rows (sites that appear in GAO FY26 deployment list but lack a
+confirmed SAM.gov solicitation) are withheld pending verification.
+""")
 
 
 # ------------------------------------------------------------------ #
