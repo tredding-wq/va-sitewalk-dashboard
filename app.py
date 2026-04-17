@@ -59,16 +59,17 @@ st.markdown(
         font-weight: 800 !important;
         line-height: 1.15 !important;
     }}
-    /* US flag renders small by default on Windows (regional indicator pair);
-       boost size + use emoji-capable fonts so it matches the title weight. */
+    /* Inline-SVG flag — renders identically on every platform (Windows's
+       Segoe UI Emoji has no flag glyphs, so the regional-indicator emoji
+       falls back to plain "US" text there). */
     .va-hero h1 .flag {{
-        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
-                     "Twemoji Mozilla", EmojiOne, "Android Emoji", sans-serif !important;
-        font-size: 1.25em;
-        vertical-align: -0.08em;
-        margin-right: 0.3em;
-        font-weight: 400;
-        letter-spacing: 0;
+        display: inline-block;
+        width: 1.55em;
+        height: 1em;
+        vertical-align: -0.06em;
+        margin-right: 0.42em;
+        border-radius: 2px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }}
     div[data-testid="stMarkdownContainer"] .va-hero p.tagline {{
         color: #E8F0FA !important;
@@ -483,7 +484,7 @@ if page == "Overview":
         f"""
         <div class="va-hero">
             <div class="va-hero__left">
-                <h1><span class="flag">&#127482;&#127480;</span>VA Site Walk Intelligence</h1>
+                <h1><svg class="flag" viewBox="0 0 39 26" xmlns="http://www.w3.org/2000/svg" aria-label="US flag" role="img"><rect width="39" height="26" fill="#B22234"/><rect y="2" width="39" height="2" fill="#fff"/><rect y="6" width="39" height="2" fill="#fff"/><rect y="10" width="39" height="2" fill="#fff"/><rect y="14" width="39" height="2" fill="#fff"/><rect y="18" width="39" height="2" fill="#fff"/><rect y="22" width="39" height="2" fill="#fff"/><rect width="16" height="14" fill="#3C3B6E"/><g fill="#fff"><circle cx="2.5" cy="2.5" r="0.6"/><circle cx="6" cy="2.5" r="0.6"/><circle cx="9.5" cy="2.5" r="0.6"/><circle cx="13" cy="2.5" r="0.6"/><circle cx="4.25" cy="5" r="0.6"/><circle cx="7.75" cy="5" r="0.6"/><circle cx="11.25" cy="5" r="0.6"/><circle cx="2.5" cy="7.5" r="0.6"/><circle cx="6" cy="7.5" r="0.6"/><circle cx="9.5" cy="7.5" r="0.6"/><circle cx="13" cy="7.5" r="0.6"/><circle cx="4.25" cy="10" r="0.6"/><circle cx="7.75" cy="10" r="0.6"/><circle cx="11.25" cy="10" r="0.6"/><circle cx="2.5" cy="12.5" r="0.6"/><circle cx="6" cy="12.5" r="0.6"/><circle cx="9.5" cy="12.5" r="0.6"/><circle cx="13" cy="12.5" r="0.6"/></g></svg>VA Site Walk Intelligence</h1>
                 <p class="tagline">Tracking EHRM construction procurement across every VA facility &mdash; serving those who served.</p>
                 <div class="va-hero__stats">
                     <span class="stat"><b>{projects_n}</b> Projects</span>
