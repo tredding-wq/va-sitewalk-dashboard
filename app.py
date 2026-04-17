@@ -735,20 +735,56 @@ elif page == "Companies":
     c3.metric("With Website", int(df["website"].notna().sum()))
     c4.metric("With UEI", int(df["sam_uei"].notna().sum() if "sam_uei" in df else 0))
 
-    st.dataframe(
-        df[["canonical_name", "primary_category", "times_seen", "sites_list",
+    # Derive compact sites count from semicolon-separated sites_list
+    df["sites_count"] = df["sites_list"].fillna("").apply(
+        lambda s: len([x for x in s.split(";") if x.strip()]) if s else 0
+    )
+
+    event = st.dataframe(
+        df[["canonical_name", "primary_category", "times_seen", "sites_count",
             "sdvosb_prime", "website", "sam_uei",
             "certifications", "email_domains", "last_seen"]],
         use_container_width=True, height=600,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="companies_df",
         column_config={
             "canonical_name": st.column_config.TextColumn("Company", width="large"),
-            "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
-            "sites_list": st.column_config.TextColumn("Sites Visited", width="large"),
+            "times_seen": st.column_config.NumberColumn(
+                "Seen",
+                help="Number of VA sign-in sheets this company appears on",
+                format="%d",
+            ),
+            "sites_count": st.column_config.NumberColumn(
+                "Sites",
+                help="Distinct VA facilities visited. Click a row to see the full list.",
+                format="%d",
+            ),
             "sdvosb_prime": st.column_config.CheckboxColumn("SDVOSB"),
-            "website": st.column_config.LinkColumn("Website",
-                display_text=r"https?://(?:www\.)?([^/]+).*"),
+            "website": st.column_config.LinkColumn(
+                "Website",
+                display_text=r"https?://(?:www\.)?([^/]+).*",
+            ),
         },
     )
+
+    # Detail panel: show full Sites Visited list for the selected row
+    selected_rows = event.selection.rows if event and event.selection else []
+    if selected_rows:
+        idx = selected_rows[0]
+        row = df.iloc[idx]
+        with st.container(border=True):
+            st.markdown(f"### {row['canonical_name']}  —  Sites Visited")
+            sites_txt = row.get("sites_list") or ""
+            sites = sorted({s.strip() for s in sites_txt.split(";") if s.strip()})
+            if not sites:
+                st.caption("No sitewalk records linked to this company yet.")
+            else:
+                st.caption(f"{len(sites)} distinct VA facilities")
+                ncols = 2 if len(sites) > 6 else 1
+                cols = st.columns(ncols)
+                for i, s in enumerate(sites):
+                    cols[i % ncols].markdown(f"- {s}")
 
     if sdvosb_only and not df.empty and "va_prime_total_obligated" in df.columns:
         st.subheader("SDVOSB VA Prime Award Volume")
