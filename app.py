@@ -377,11 +377,14 @@ elif page == "Sites":
             map_df, lat="latitude", lon="longitude",
             hover_name="station_name",
             hover_data=["station_number", "city", "state", "visn", "project_count", "attendee_count"],
-            size=map_df["project_count"].clip(lower=1) * 3,
-            color="project_count", color_continuous_scale="YlOrRd",
+            size=map_df["project_count"].clip(lower=1),
+            size_max=10,
+            color="project_count",
+            color_continuous_scale=[[0, "#A9C1DC"], [1, VA_BLUE]],
             scope="usa", height=450,
         )
-        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0),
+                          geo=dict(bgcolor="rgba(0,0,0,0)", lakecolor="white"))
         st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
