@@ -35,9 +35,57 @@ st.markdown(
         margin-bottom: 1.25rem !important;
         box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
         border-top: 4px solid {VA_GOLD} !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 2rem !important;
+        flex-wrap: wrap !important;
     }}
     .va-hero h1 {{ color: white !important; margin: 0 !important; font-size: 2.3rem !important; letter-spacing: 0.5px !important; font-weight: 800 !important; }}
     .va-hero p  {{ color: #E8F0FA !important; margin: 0.35rem 0 0 0 !important; font-size: 1.1rem !important; }}
+    .va-hero__left {{ flex: 1 1 420px; min-width: 0; }}
+    .va-hero__cta {{
+        flex: 0 1 auto;
+        display: flex; flex-direction: column; align-items: flex-end;
+        gap: 0.55rem;
+        padding: 0.9rem 1.1rem;
+        background: rgba(255,255,255,0.10) !important;
+        border: 1px solid rgba(255,255,255,0.22) !important;
+        border-radius: 8px;
+        backdrop-filter: blur(2px);
+    }}
+    .va-hero__cta .eyebrow {{
+        color: {VA_GOLD} !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.14em !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+    }}
+    .va-hero__cta .ask {{
+        color: #F5F7FA !important;
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        text-align: right;
+        max-width: 260px;
+    }}
+    .va-hero__cta a.donate-btn {{
+        background: white !important;
+        color: {VA_RED} !important;
+        padding: 0.55rem 1.1rem !important;
+        border-radius: 6px !important;
+        font-weight: 800 !important;
+        font-size: 0.88rem !important;
+        text-decoration: none !important;
+        letter-spacing: 0.3px;
+        border: 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }}
+    .va-hero__cta a.donate-btn:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+    }}
     .va-stripe {{
         height: 6px !important;
         background: repeating-linear-gradient(90deg,
@@ -374,62 +422,21 @@ if page == "Overview":
     st.markdown(
         """
         <div class="va-hero">
-            <h1>&#127482;&#127480; VA Site Walk Intelligence</h1>
-            <p>Tracking EHRM construction procurement across every VA facility — serving those who served.</p>
+            <div class="va-hero__left">
+                <h1>&#127482;&#127480; VA Site Walk Intelligence</h1>
+                <p>Tracking EHRM construction procurement across every VA facility — serving those who served.</p>
+            </div>
+            <div class="va-hero__cta">
+                <div class="eyebrow">Open Source · Built for Veterans</div>
+                <div class="ask">If this saves you time, please give back to those who served.</div>
+                <a class="donate-btn"
+                   href="https://www.woundedwarriorproject.org/donate"
+                   target="_blank" rel="noopener">
+                    Donate to WWP &rarr;
+                </a>
+            </div>
         </div>
         <div class="va-stripe"></div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # ------------------------------------------------------------------ #
-    # Open-source + Wounded Warrior Project donation banner
-    # ------------------------------------------------------------------ #
-    st.markdown(
-        f"""
-        <div style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
-            background: #FFFFFF;
-            border: 1px solid #E5EAF1;
-            border-left: 4px solid {VA_BLUE};
-            border-radius: 8px;
-            padding: 1.15rem 1.5rem;
-            margin: 0 0 1.5rem 0;
-            flex-wrap: wrap;
-        ">
-            <div style="flex: 1 1 360px; min-width: 0;">
-                <div style="
-                    color: {VA_BLUE}; font-weight: 700; font-size: 0.78rem;
-                    letter-spacing: 0.12em; text-transform: uppercase;
-                    margin-bottom: 0.35rem;
-                ">Open Source · Built for Veterans</div>
-                <div style="color: #0D1A2D; font-size: 0.98rem; line-height: 1.5;">
-                    If this dashboard saves you time, please consider supporting the
-                    <a href="https://www.woundedwarriorproject.org/donate"
-                       target="_blank" rel="noopener"
-                       style="color: {VA_RED}; font-weight: 600; text-decoration: none; border-bottom: 1px solid {VA_RED};">Wounded Warrior Project</a>.
-                </div>
-            </div>
-            <a href="https://www.woundedwarriorproject.org/donate"
-               target="_blank" rel="noopener"
-               style="
-                   flex: 0 0 auto;
-                   display: inline-block;
-                   background: {VA_RED};
-                   color: white !important;
-                   padding: 0.7rem 1.5rem;
-                   border-radius: 6px;
-                   font-weight: 700;
-                   text-decoration: none;
-                   font-size: 0.95rem;
-                   white-space: nowrap;
-               ">
-                Donate &rarr;
-            </a>
-        </div>
         """,
         unsafe_allow_html=True,
     )
