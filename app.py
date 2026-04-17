@@ -324,6 +324,39 @@ page = st.sidebar.radio("Navigate", [
     "Pipeline Runs",
 ])
 
+st.sidebar.markdown(
+    f"""
+    <div style="
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(255,255,255,0.08);
+        border-left: 4px solid {VA_GOLD};
+        border-radius: 6px;
+    ">
+        <p style="color: white !important; font-size: 0.82rem; line-height: 1.5; margin: 0 0 0.6rem 0;">
+            <strong>Free &amp; open source</strong> — built to help veterans get
+            modernized care faster.
+        </p>
+        <a href="https://www.woundedwarriorproject.org/donate"
+           target="_blank" rel="noopener"
+           style="
+               display: block;
+               background: {VA_RED};
+               color: white !important;
+               text-align: center;
+               padding: 0.55rem 0.75rem;
+               border-radius: 5px;
+               font-weight: 700;
+               text-decoration: none;
+               font-size: 0.88rem;
+           ">
+            Donate to WWP &rarr;
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # ------------------------------------------------------------------ #
 #  Overview
@@ -339,6 +372,79 @@ if page == "Overview":
         """,
         unsafe_allow_html=True,
     )
+
+    # ------------------------------------------------------------------ #
+    # Open-source + Wounded Warrior Project donation banner (top of page)
+    # ------------------------------------------------------------------ #
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFD 100%);
+            border: 2px solid {VA_RED};
+            border-left: 10px solid {VA_RED};
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 0 0 1.5rem 0;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+        ">
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem;">
+                <span style="font-size: 1.8rem;">&#128170;</span>
+                <h2 style="color: {VA_BLUE}; margin: 0; font-weight: 800; font-size: 1.55rem;">
+                    Free &amp; Open Source — Built for Veterans
+                </h2>
+            </div>
+            <p style="color: #0D1A2D; font-size: 1.05rem; line-height: 1.6; margin-bottom: 1rem;">
+                This dashboard is <strong>free to use and open source</strong>. It exists
+                to help contractors, researchers, and the VA community collaborate on
+                EHRM infrastructure transparency — because faster, better-informed
+                procurement means quicker modernization and
+                <strong style="color: {VA_BLUE};">better care for every veteran who served</strong>.
+            </p>
+            <div style="
+                background: #FFF8E7;
+                border-left: 4px solid {VA_GOLD};
+                padding: 0.9rem 1.2rem;
+                border-radius: 6px;
+                margin-bottom: 1.1rem;
+            ">
+                <p style="color: #0D1A2D; font-size: 1rem; margin: 0; line-height: 1.55;">
+                    <strong>If this tool saves you time or benefits your work,
+                    please consider donating to the
+                    <a href="https://www.woundedwarriorproject.org/donate"
+                       target="_blank" rel="noopener"
+                       style="color: {VA_RED}; font-weight: 800; text-decoration: none;">
+                        Wounded Warrior Project
+                    </a>
+                    </strong> &mdash; supporting the veterans this work ultimately serves.
+                </p>
+            </div>
+            <a href="https://www.woundedwarriorproject.org/donate"
+               target="_blank" rel="noopener"
+               style="
+                   display: inline-block;
+                   background: {VA_RED};
+                   color: white !important;
+                   padding: 0.85rem 2rem;
+                   border-radius: 8px;
+                   font-weight: 800;
+                   text-decoration: none;
+                   font-size: 1.08rem;
+                   letter-spacing: 0.4px;
+                   box-shadow: 0 3px 10px rgba(200,16,46,0.35);
+                   text-transform: uppercase;
+               ">
+                Donate to Wounded Warrior Project &rarr;
+            </a>
+            <p style="color: #666; font-size: 0.82rem; margin-top: 1rem; margin-bottom: 0;">
+                Wounded Warrior Project is an independent 501(c)(3) nonprofit.
+                This dashboard is not affiliated with or endorsed by WWP or the
+                U.S. Department of Veterans Affairs.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     s = load_summary()
 
     c1, c2, c3, c4 = st.columns(4)
