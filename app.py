@@ -350,19 +350,8 @@ def load_companies():
                kc.primary_naics, kc.certifications, kc.last_seen,
                COALESCE(kc.is_sdvosb_va_prime, 0) AS sdvosb_prime,
                kc.va_prime_total_obligated, kc.va_prime_award_count,
-               (SELECT COUNT(*) FROM known_attendees WHERE company_id = kc.id) AS attendee_count,
-               cs.sites_count, cs.sites_list
+               kc.sites_visited_text AS sites_list
         FROM known_companies kc
-        LEFT JOIN (
-            SELECT ka.company_id,
-                   COUNT(DISTINCT ats.station_number) AS sites_count,
-                   GROUP_CONCAT(DISTINCT vs.station_name || ' (' || vs.city || ')') AS sites_list
-            FROM known_attendees ka
-            JOIN attendee_sites ats ON ats.attendee_id = ka.id
-            JOIN va_sites vs ON vs.station_number = ats.station_number
-            WHERE ka.company_id IS NOT NULL
-            GROUP BY ka.company_id
-        ) cs ON cs.company_id = kc.id
         ORDER BY kc.times_seen DESC
     """)
 
