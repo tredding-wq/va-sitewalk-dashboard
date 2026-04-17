@@ -119,9 +119,30 @@ def scalar(sql: str) -> int:
 #  Data loaders
 # ------------------------------------------------------------------ #
 
+def _facility_type(name: str) -> str:
+    if not isinstance(name, str):
+        return "Other"
+    n = name.lower()
+    if "community living center" in n:
+        return "Community Living Center"
+    if "domiciliary" in n:
+        return "Domiciliary"
+    if "mobile vet center" in n:
+        return "Mobile Vet Center"
+    if "vet center" in n:
+        return "Vet Center"
+    if "mobile clinic" in n:
+        return "Mobile Clinic"
+    if "medical center" in n:
+        return "Medical Center"
+    if "clinic" in n:
+        return "Clinic"
+    return "Other"
+
+
 @st.cache_data(ttl=300)
 def load_sites():
-    return query("""
+    df = query("""
         SELECT vs.station_number, vs.station_name, vs.parent_station, vs.visn,
                vs.city, vs.state, vs.zip, vs.street1, vs.phone, vs.category_id,
                vs.latitude, vs.longitude,
@@ -136,6 +157,8 @@ def load_sites():
             ON a.station_number = vs.station_number
         ORDER BY (COALESCE(p.cnt,0) + COALESCE(a.cnt,0)) DESC, vs.station_number
     """)
+    df["facility_type"] = df["station_name"].apply(_facility_type)
+    return df
 
 
 @st.cache_data(ttl=300)
@@ -353,18 +376,22 @@ elif page == "Sites":
     st.title("VA Sites Directory")
     df = load_sites()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         visn_filter = st.multiselect("Filter by VISN", sorted(df["visn"].dropna().unique()))
     with col2:
         state_filter = st.multiselect("Filter by State", sorted(df["state"].dropna().unique()))
     with col3:
+        type_filter = st.multiselect("Filter by Type", sorted(df["facility_type"].dropna().unique()))
+    with col4:
         show_with_projects = st.checkbox("Only sites with projects", value=False)
 
     if visn_filter:
         df = df[df["visn"].isin(visn_filter)]
     if state_filter:
         df = df[df["state"].isin(state_filter)]
+    if type_filter:
+        df = df[df["facility_type"].isin(type_filter)]
     if show_with_projects:
         df = df[df["project_count"] > 0]
 
@@ -376,7 +403,7 @@ elif page == "Sites":
         fig = px.scatter_geo(
             map_df, lat="latitude", lon="longitude",
             hover_name="station_name",
-            hover_data=["station_number", "city", "state", "visn", "project_count", "attendee_count"],
+            hover_data=["station_number", "facility_type", "city", "state", "visn", "project_count", "attendee_count"],
             size=map_df["project_count"].clip(lower=1),
             size_max=10,
             color="project_count",
@@ -388,7 +415,7 @@ elif page == "Sites":
         st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
-        df[["station_number", "station_name", "city", "state", "visn",
+        df[["station_number", "station_name", "facility_type", "city", "state", "visn",
             "project_count", "attendee_count", "phone", "street1"]],
         use_container_width=True, height=500,
     )
