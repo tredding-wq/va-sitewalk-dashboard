@@ -30,61 +30,97 @@ st.markdown(
     <style>
     /* Patriotic top banner */
     .va-hero {{
-        background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_BLUE} 45%, {VA_RED} 55%, {VA_RED} 100%) !important;
-        color: white !important; padding: 1.75rem 2rem !important; border-radius: 10px !important;
+        background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_BLUE} 42%, {VA_RED} 58%, {VA_RED} 100%) !important;
+        color: white !important;
+        padding: 2rem 2.25rem !important;
+        border-radius: 12px !important;
         margin-bottom: 1.25rem !important;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.22) !important;
         border-top: 4px solid {VA_GOLD} !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 2rem !important;
+        gap: 2.5rem !important;
         flex-wrap: wrap !important;
     }}
-    .va-hero h1 {{ color: white !important; margin: 0 !important; font-size: 2.3rem !important; letter-spacing: 0.5px !important; font-weight: 800 !important; }}
-    .va-hero p  {{ color: #E8F0FA !important; margin: 0.35rem 0 0 0 !important; font-size: 1.1rem !important; }}
-    .va-hero__left {{ flex: 1 1 420px; min-width: 0; }}
+    /* Compound selector beats the generic stMarkdownContainer h1 rule */
+    div[data-testid="stMarkdownContainer"] .va-hero h1 {{
+        color: white !important;
+        margin: 0 !important;
+        font-size: 2.2rem !important;
+        letter-spacing: 0.5px !important;
+        font-weight: 800 !important;
+        line-height: 1.15 !important;
+    }}
+    div[data-testid="stMarkdownContainer"] .va-hero p.tagline {{
+        color: #E8F0FA !important;
+        margin: 0.4rem 0 0 0 !important;
+        font-size: 1.08rem !important;
+        line-height: 1.45 !important;
+        max-width: 560px;
+    }}
+    .va-hero__left {{ flex: 2 1 520px; min-width: 0; }}
+    .va-hero__stats {{
+        display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem;
+        margin-top: 1rem; font-size: 0.95rem;
+        color: rgba(255,255,255,0.95) !important;
+    }}
+    .va-hero__stats .stat {{
+        display: inline-flex; align-items: baseline; gap: 0.35rem;
+    }}
+    .va-hero__stats .stat b {{
+        color: {VA_GOLD} !important;
+        font-size: 1.15rem; font-weight: 800;
+        letter-spacing: 0.3px;
+    }}
+    .va-hero__stats .dot {{ color: rgba(255,255,255,0.45) !important; }}
+
     .va-hero__cta {{
-        flex: 0 1 auto;
-        display: flex; flex-direction: column; align-items: flex-end;
-        gap: 0.55rem;
-        padding: 0.9rem 1.1rem;
-        background: rgba(255,255,255,0.10) !important;
-        border: 1px solid rgba(255,255,255,0.22) !important;
-        border-radius: 8px;
-        backdrop-filter: blur(2px);
+        flex: 1 1 300px; max-width: 360px;
+        display: flex; flex-direction: column; align-items: stretch;
+        gap: 0.7rem;
+        padding: 1.15rem 1.25rem;
+        background: rgba(255,255,255,0.12) !important;
+        border: 1px solid rgba(255,255,255,0.28) !important;
+        border-radius: 10px;
     }}
     .va-hero__cta .eyebrow {{
         color: {VA_GOLD} !important;
         font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.14em !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.16em !important;
         text-transform: uppercase !important;
         margin: 0 !important;
     }}
     .va-hero__cta .ask {{
-        color: #F5F7FA !important;
-        font-size: 0.9rem !important;
+        color: #FFFFFF !important;
+        font-size: 0.97rem !important;
+        line-height: 1.45 !important;
         margin: 0 !important;
-        text-align: right;
-        max-width: 260px;
     }}
+    .va-hero__cta .ask strong {{ color: {VA_GOLD} !important; }}
     .va-hero__cta a.donate-btn {{
+        display: block; text-align: center;
         background: white !important;
         color: {VA_RED} !important;
-        padding: 0.55rem 1.1rem !important;
-        border-radius: 6px !important;
+        padding: 0.75rem 1.1rem !important;
+        border-radius: 7px !important;
         font-weight: 800 !important;
-        font-size: 0.88rem !important;
+        font-size: 0.95rem !important;
         text-decoration: none !important;
-        letter-spacing: 0.3px;
-        border: 0;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        letter-spacing: 0.4px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.18);
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }}
     .va-hero__cta a.donate-btn:hover {{
         transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.22);
+        box-shadow: 0 5px 12px rgba(0,0,0,0.25);
+    }}
+    .va-hero__cta .fineprint {{
+        color: rgba(255,255,255,0.6) !important;
+        font-size: 0.7rem !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
     }}
     .va-stripe {{
         height: 6px !important;
@@ -419,29 +455,49 @@ st.sidebar.markdown(
 #  Overview
 # ------------------------------------------------------------------ #
 if page == "Overview":
+    s = load_summary()
+    attendees = f"{s.get('known_attendees', 0):,}"
+    projects_n = f"{s.get('projects', 0):,}"
+    solicits = f"{s.get('project_tracker', 0):,}"
+    sites_n = f"{s.get('va_sites', 0):,}"
+
     st.markdown(
-        """
+        f"""
         <div class="va-hero">
             <div class="va-hero__left">
                 <h1>&#127482;&#127480; VA Site Walk Intelligence</h1>
-                <p>Tracking EHRM construction procurement across every VA facility — serving those who served.</p>
+                <p class="tagline">Tracking EHRM construction procurement across every VA facility &mdash; serving those who served.</p>
+                <div class="va-hero__stats">
+                    <span class="stat"><b>{projects_n}</b> Projects</span>
+                    <span class="dot">&middot;</span>
+                    <span class="stat"><b>{solicits}</b> Solicitations</span>
+                    <span class="dot">&middot;</span>
+                    <span class="stat"><b>{attendees}</b> Attendees</span>
+                    <span class="dot">&middot;</span>
+                    <span class="stat"><b>{sites_n}</b> VA Facilities</span>
+                </div>
             </div>
             <div class="va-hero__cta">
-                <div class="eyebrow">Open Source · Built for Veterans</div>
-                <div class="ask">If this saves you time, please give back to those who served.</div>
+                <div class="eyebrow">Open Source &middot; For Veterans</div>
+                <div class="ask">
+                    This dashboard is <strong>free and open</strong>.
+                    If it helps your work, please give back to the veterans it serves.
+                </div>
                 <a class="donate-btn"
                    href="https://www.woundedwarriorproject.org/donate"
                    target="_blank" rel="noopener">
-                    Donate to WWP &rarr;
+                    Donate to Wounded Warrior Project &rarr;
                 </a>
+                <div class="fineprint">
+                    WWP is an independent 501(c)(3). Not affiliated with this
+                    dashboard or the U.S. Dept. of Veterans Affairs.
+                </div>
             </div>
         </div>
         <div class="va-stripe"></div>
         """,
         unsafe_allow_html=True,
     )
-
-    s = load_summary()
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("VA Sites", f"{s['va_sites']:,}")
