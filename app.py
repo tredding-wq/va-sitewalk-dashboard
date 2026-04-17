@@ -14,9 +14,83 @@ import streamlit as st
 
 st.set_page_config(
     page_title="VA Site Walk Intelligence",
-    page_icon="\U0001f3d7\ufe0f",
+    page_icon="\U0001f1fa\U0001f1f8",  # US flag
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# ---- VA / patriotic color palette ----
+VA_BLUE = "#002B5C"      # VA flagship blue
+VA_RED = "#C8102E"       # VA flagship red
+VA_GOLD = "#FFC72C"      # Accent
+USA_PALETTE = [VA_BLUE, VA_RED, VA_GOLD, "#4A7FA7", "#7A1F2B", "#F2F2F2"]
+
+st.markdown(
+    f"""
+    <style>
+    /* Patriotic top banner */
+    .va-hero {{
+        background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_BLUE} 45%, {VA_RED} 55%, {VA_RED} 100%) !important;
+        color: white !important; padding: 1.75rem 2rem !important; border-radius: 10px !important;
+        margin-bottom: 1.25rem !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
+        border-top: 4px solid {VA_GOLD} !important;
+    }}
+    .va-hero h1 {{ color: white !important; margin: 0 !important; font-size: 2.3rem !important; letter-spacing: 0.5px !important; font-weight: 800 !important; }}
+    .va-hero p  {{ color: #E8F0FA !important; margin: 0.35rem 0 0 0 !important; font-size: 1.1rem !important; }}
+    .va-stripe {{
+        height: 6px !important;
+        background: repeating-linear-gradient(90deg,
+            {VA_RED} 0 40px, white 40px 80px, {VA_BLUE} 80px 120px) !important;
+        margin: 0.5rem 0 1rem 0 !important; border-radius: 3px !important;
+    }}
+    /* Metric accent — multiple selector fallbacks for different Streamlit versions */
+    [data-testid="stMetricValue"], [data-testid="stMetric"] > div > div:nth-child(2),
+    div[data-testid="metric-container"] > div:nth-child(2) {{
+        color: {VA_BLUE} !important; font-weight: 800 !important;
+    }}
+    [data-testid="stMetricLabel"], [data-testid="stMetric"] label,
+    div[data-testid="metric-container"] label {{
+        color: {VA_RED} !important; font-weight: 700 !important;
+        text-transform: uppercase !important; letter-spacing: 0.08em !important; font-size: 0.78rem !important;
+    }}
+    /* Sidebar — make it navy */
+    section[data-testid="stSidebar"], section[data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] {{
+        background: linear-gradient(180deg, {VA_BLUE} 0%, #001a3a 100%) !important;
+    }}
+    section[data-testid="stSidebar"] *,
+    [data-testid="stSidebar"] * {{ color: white !important; }}
+    section[data-testid="stSidebar"] h1 {{
+        color: white !important;
+        border-bottom: 3px solid {VA_RED} !important;
+        padding-bottom: 0.5rem !important;
+    }}
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stRadio label p {{
+        color: white !important; font-weight: 600 !important;
+    }}
+    /* H1/H2 on main area gets blue accent underline */
+    div[data-testid="stMarkdownContainer"] h2 {{
+        color: {VA_BLUE} !important;
+        border-bottom: 2px solid {VA_RED} !important;
+        padding-bottom: 0.25rem !important;
+        margin-top: 1.5rem !important;
+    }}
+    /* Main page title */
+    div[data-testid="stMarkdownContainer"] h1 {{
+        color: {VA_BLUE} !important;
+    }}
+    /* Metric container — add subtle border */
+    [data-testid="stMetric"], div[data-testid="metric-container"] {{
+        background: #F7FAFD !important;
+        border-left: 4px solid {VA_RED} !important;
+        padding: 0.75rem 1rem !important;
+        border-radius: 6px !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 DB_PATH = Path(__file__).parent / "signin_ocr.sqlite"
@@ -193,6 +267,7 @@ page = st.sidebar.radio("Navigate", [
     "Attendees",
     "Companies",
     "Joint Ventures",
+    "Rep Networks",
     "Pipeline Runs",
 ])
 
@@ -201,7 +276,16 @@ page = st.sidebar.radio("Navigate", [
 #  Overview
 # ------------------------------------------------------------------ #
 if page == "Overview":
-    st.title("VA Site Walk Intelligence Dashboard")
+    st.markdown(
+        """
+        <div class="va-hero">
+            <h1>&#127482;&#127480; VA Site Walk Intelligence</h1>
+            <p>Tracking EHRM construction procurement across every VA facility — serving those who served.</p>
+        </div>
+        <div class="va-stripe"></div>
+        """,
+        unsafe_allow_html=True,
+    )
     s = load_summary()
 
     c1, c2, c3, c4 = st.columns(4)
@@ -216,7 +300,7 @@ if page == "Overview":
     c7.metric("SDVOSB Primes", s['sdvosb_primes'])
     c8.metric("With UEI", s['with_uei'])
 
-    st.divider()
+    st.markdown('<div class="va-stripe"></div>', unsafe_allow_html=True)
     col_left, col_right = st.columns(2)
 
     with col_left:
@@ -226,21 +310,27 @@ if page == "Overview":
             state_counts = projects.dropna(subset=["site_state"]).groupby("site_state").size().reset_index(name="count")
             fig = px.choropleth(
                 state_counts, locations="site_state", locationmode="USA-states",
-                color="count", scope="usa", color_continuous_scale="Blues",
+                color="count", scope="usa",
+                color_continuous_scale=[[0, "#E8F0FA"], [0.5, VA_BLUE], [1, VA_RED]],
                 labels={"count": "Projects", "site_state": "State"},
             )
-            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=350)
+            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=350,
+                              geo=dict(bgcolor="rgba(0,0,0,0)", lakecolor="white"))
             st.plotly_chart(fig, use_container_width=True)
 
     with col_right:
-        st.subheader("Top Companies by Appearances")
+        st.subheader("Top Companies by Sheet Appearances")
         companies = load_companies()
         if not companies.empty:
             top = companies.head(15)[["canonical_name", "times_seen", "primary_category"]]
             fig = px.bar(top, x="times_seen", y="canonical_name", orientation="h",
-                         color="primary_category", labels={"times_seen": "Times Seen"},
+                         color="primary_category", color_discrete_sequence=USA_PALETTE,
+                         labels={"times_seen": "Sheets", "canonical_name": ""},
                          height=350)
-            fig.update_layout(yaxis=dict(autorange="reversed"), margin=dict(l=0, r=0, t=0, b=0))
+            fig.update_layout(yaxis=dict(autorange="reversed"),
+                              margin=dict(l=0, r=0, t=0, b=0),
+                              plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                              legend=dict(orientation="h", y=-0.15, title=""))
             st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Category Breakdown")
@@ -248,9 +338,11 @@ if page == "Overview":
         cat_counts = companies.groupby("primary_category").size().reset_index(name="count")
         cat_counts = cat_counts.sort_values("count", ascending=False)
         fig = px.bar(cat_counts, x="count", y="primary_category", orientation="h", height=500,
-                     color="primary_category", labels={"count": "Companies"})
-        fig.update_layout(yaxis=dict(autorange="reversed"), showlegend=False,
-                          margin=dict(l=0, r=0, t=0, b=0))
+                     color="count", color_continuous_scale=[[0, VA_BLUE], [1, VA_RED]],
+                     labels={"count": "Companies", "primary_category": ""})
+        fig.update_layout(yaxis=dict(autorange="reversed"), showlegend=False, coloraxis_showscale=False,
+                          margin=dict(l=0, r=0, t=0, b=0),
+                          plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -463,7 +555,7 @@ elif page == "Joint Ventures":
     companies = load_companies()
 
     jv_companies = companies[
-        companies["canonical_name"].str.contains("JV|Joint Venture|J\.V\.", case=False, na=False)
+        companies["canonical_name"].str.contains(r"JV|Joint Venture|J\.V\.", case=False, na=False)
     ]
 
     st.metric("JV Entities", len(jv_companies))
@@ -482,6 +574,80 @@ elif page == "Joint Ventures":
                        "website", "sam_uei", "email_domains"]],
         use_container_width=True, height=400,
     )
+
+
+# ------------------------------------------------------------------ #
+#  Rep Networks (manufacturer rollups via rep firms)
+# ------------------------------------------------------------------ #
+elif page == "Rep Networks":
+    st.title("Manufacturer Rollups via Rep Networks")
+    st.caption("Attendance credit for a manufacturer (e.g. Leviton) when any of its rep-firm "
+               "reps attend a VA site walk. Pulled from the rep_contacts table.")
+
+    rollups = query("""
+        SELECT r.company_id, r.canonical_name, r.direct_sheets, r.via_rep_sheets,
+               r.combined_sheets, r.direct_solicitations, r.via_rep_solicitations,
+               r.combined_solicitations, r.rep_firms_active
+          FROM company_attendance_rollup r
+         WHERE r.via_rep_sheets > 0
+         ORDER BY r.combined_sheets DESC, r.via_rep_sheets DESC
+    """)
+
+    if rollups.empty:
+        st.info("No manufacturer rollups available. Run the export script after loading rep_contacts.")
+    else:
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Manufacturers tracked", len(rollups))
+        c2.metric("Total rep-firm sheets", int(rollups["via_rep_sheets"].sum()))
+        c3.metric("Combined unique sheets", int(rollups["combined_sheets"].sum()))
+
+        manufacturers = rollups["canonical_name"].tolist()
+        selected = st.selectbox("Manufacturer", manufacturers)
+        row = rollups[rollups["canonical_name"] == selected].iloc[0]
+
+        def _n(v):
+            return 0 if pd.isna(v) else int(v)
+
+        st.subheader(f"{selected} — Attendance Rollup")
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Direct sheets", _n(row["direct_sheets"]))
+        m2.metric("Via-rep sheets", _n(row["via_rep_sheets"]),
+                  help=f"Across {_n(row['rep_firms_active'])} active rep firm(s)")
+        m3.metric("Combined sheets", _n(row["combined_sheets"]),
+                  delta=f"+{_n(row['combined_sheets']) - _n(row['direct_sheets'])} via reps")
+
+        s1, s2, s3 = st.columns(3)
+        s1.metric("Direct solicitations", _n(row["direct_solicitations"]))
+        s2.metric("Via-rep solicitations", _n(row["via_rep_solicitations"]))
+        s3.metric("Combined solicitations", _n(row["combined_solicitations"]))
+
+        per_firm = query(f"""
+            SELECT rc.rep_company,
+                   COUNT(DISTINCT rc.email) AS reps,
+                   COUNT(DISTINCT ka.id) AS reps_in_attendees,
+                   COUNT(DISTINCT aps.station_number) AS sites_covered
+              FROM rep_contacts rc
+              LEFT JOIN known_attendees ka ON lower(ka.email) = lower(rc.email)
+              LEFT JOIN attendee_sites aps ON aps.attendee_id = ka.id
+             WHERE lower(rc.manufacturer) = lower('{selected.replace("'","''")}')
+             GROUP BY rc.rep_company
+             ORDER BY sites_covered DESC, reps DESC
+        """)
+        if not per_firm.empty:
+            st.subheader(f"{selected} — Rep Firms")
+            st.dataframe(per_firm, use_container_width=True, height=400)
+
+        if not rollups.empty:
+            st.subheader("All Manufacturer Rollups")
+            fig = px.bar(rollups.head(20), x="canonical_name",
+                         y=["direct_sheets", "via_rep_sheets"],
+                         title="Direct vs. Via-Rep Attendance",
+                         labels={"value": "Sheets", "canonical_name": "Manufacturer"},
+                         barmode="stack",
+                         color_discrete_sequence=[VA_BLUE, VA_RED])
+            fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+            st.plotly_chart(fig, use_container_width=True)
+            st.dataframe(rollups, use_container_width=True, height=300)
 
 
 # ------------------------------------------------------------------ #
