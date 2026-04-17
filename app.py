@@ -165,18 +165,38 @@ def load_sites():
 def load_projects():
     return query("""
         SELECT p.id, p.project_number, p.project_title, p.program, p.status,
-               p.station_number, vs.station_name AS site_name,
-               vs.city AS site_city, vs.state AS site_state, vs.visn,
-               t.solicitation_count, t.solicitation_numbers,
+               p.station_number,
+               COALESCE(vs.station_name, p.facility) AS site_name,
+               COALESCE(vs.city, p.city) AS site_city,
+               COALESCE(vs.state, p.state) AS site_state,
+               COALESCE(vs.visn, p.visn) AS visn,
+               s.solicitation_count, s.solicitation_numbers,
                t.latest_status, t.total_sheets, t.total_attendees_extracted,
                t.site_visit_dates, ap.unique_attendees,
                p.first_seen_date, p.last_seen_date
         FROM projects p
         LEFT JOIN va_sites vs ON vs.station_number = p.station_number
         LEFT JOIN (
-            SELECT project_id, COUNT(*) solicitation_count,
-                   GROUP_CONCAT(solicitation_number, ', ') solicitation_numbers,
-                   MAX(status) latest_status,
+            SELECT project_id,
+                   COUNT(DISTINCT solicitation) AS solicitation_count,
+                   GROUP_CONCAT(DISTINCT solicitation) AS solicitation_numbers
+            FROM (
+                SELECT project_id, solicitation_number AS solicitation
+                  FROM project_tracker
+                 WHERE project_id IS NOT NULL
+                   AND COALESCE(cancelled, 0) = 0
+                   AND TRIM(COALESCE(solicitation_number, '')) != ''
+                UNION
+                SELECT project_id, solicitation
+                  FROM ehrm_solicitations
+                 WHERE project_id IS NOT NULL
+                   AND COALESCE(cancelled, 0) = 0
+                   AND TRIM(COALESCE(solicitation, '')) != ''
+            )
+            GROUP BY project_id
+        ) s ON s.project_id = p.id
+        LEFT JOIN (
+            SELECT project_id, MAX(status) latest_status,
                    SUM(sheets_found) total_sheets,
                    SUM(attendees_extracted) total_attendees_extracted,
                    GROUP_CONCAT(DISTINCT site_visit_date) site_visit_dates
@@ -255,7 +275,17 @@ def load_summary():
     return {
         "va_sites": scalar("SELECT COUNT(*) FROM va_sites"),
         "projects": scalar("SELECT COUNT(*) FROM projects"),
-        "project_tracker": scalar("SELECT COUNT(*) FROM project_tracker"),
+        "project_tracker": scalar("""
+            SELECT COUNT(DISTINCT solicitation) FROM (
+                SELECT solicitation_number AS solicitation FROM project_tracker
+                 WHERE COALESCE(cancelled,0)=0
+                   AND TRIM(COALESCE(solicitation_number,''))!=''
+                UNION
+                SELECT solicitation FROM ehrm_solicitations
+                 WHERE COALESCE(cancelled,0)=0
+                   AND TRIM(COALESCE(solicitation,''))!=''
+            )
+        """),
         "known_attendees": scalar("SELECT COUNT(*) FROM known_attendees"),
         "known_companies": scalar("SELECT COUNT(*) FROM known_companies"),
         "attendee_sites": scalar("SELECT COUNT(*) FROM attendee_sites"),
