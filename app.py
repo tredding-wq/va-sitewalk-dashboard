@@ -344,6 +344,9 @@ def load_attendees():
 
 @st.cache_data(ttl=300)
 def load_companies():
+    # VA Staff / USACE / Other Government attend every sitewalk by definition
+    # (it's their sitewalk), so they'd dominate every list. Filter at the
+    # source so they never appear on the public companies view or charts.
     return query("""
         SELECT kc.id, kc.canonical_name, kc.primary_category, kc.times_seen,
                kc.email_domains, kc.website, kc.sam_uei, kc.sam_cage,
@@ -352,6 +355,7 @@ def load_companies():
                kc.va_prime_total_obligated, kc.va_prime_award_count,
                kc.sites_visited_text AS sites_list
         FROM known_companies kc
+        WHERE kc.primary_category NOT IN ('VA Staff', 'USACE', 'Other Government')
         ORDER BY kc.times_seen DESC
     """)
 
