@@ -42,6 +42,13 @@ st.markdown(
         justify-content: space-between !important;
         gap: 2.5rem !important;
         flex-wrap: wrap !important;
+        font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }}
+    /* Force every text node inside the hero to inherit the same font */
+    .va-hero, .va-hero * {{
+        font-family: inherit !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }}
     /* Compound selector beats the generic stMarkdownContainer h1 rule */
     div[data-testid="stMarkdownContainer"] .va-hero h1 {{
@@ -51,6 +58,17 @@ st.markdown(
         letter-spacing: 0.5px !important;
         font-weight: 800 !important;
         line-height: 1.15 !important;
+    }}
+    /* US flag renders small by default on Windows (regional indicator pair);
+       boost size + use emoji-capable fonts so it matches the title weight. */
+    .va-hero h1 .flag {{
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+                     "Twemoji Mozilla", EmojiOne, "Android Emoji", sans-serif !important;
+        font-size: 1.25em;
+        vertical-align: -0.08em;
+        margin-right: 0.3em;
+        font-weight: 400;
+        letter-spacing: 0;
     }}
     div[data-testid="stMarkdownContainer"] .va-hero p.tagline {{
         color: #E8F0FA !important;
@@ -465,7 +483,7 @@ if page == "Overview":
         f"""
         <div class="va-hero">
             <div class="va-hero__left">
-                <h1>&#127482;&#127480; VA Site Walk Intelligence</h1>
+                <h1><span class="flag">&#127482;&#127480;</span>VA Site Walk Intelligence</h1>
                 <p class="tagline">Tracking EHRM construction procurement across every VA facility &mdash; serving those who served.</p>
                 <div class="va-hero__stats">
                     <span class="stat"><b>{projects_n}</b> Projects</span>
