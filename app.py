@@ -747,15 +747,13 @@ elif page == "Companies":
     c4.metric("With UEI", int(df["sam_uei"].notna().sum() if "sam_uei" in df else 0))
 
     st.dataframe(
-        df[["canonical_name", "primary_category", "times_seen", "attendee_count",
-            "sites_count", "sites_list", "sdvosb_prime", "website", "sam_uei",
+        df[["canonical_name", "primary_category", "times_seen", "sites_list",
+            "sdvosb_prime", "website", "sam_uei",
             "certifications", "email_domains", "last_seen"]],
         use_container_width=True, height=600,
         column_config={
             "canonical_name": st.column_config.TextColumn("Company", width="large"),
             "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
-            "attendee_count": st.column_config.NumberColumn("Reps", format="%d"),
-            "sites_count": st.column_config.NumberColumn("Sites", format="%d"),
             "sites_list": st.column_config.TextColumn("Sites Visited", width="large"),
             "sdvosb_prime": st.column_config.CheckboxColumn("SDVOSB"),
             "website": st.column_config.LinkColumn("Website",
