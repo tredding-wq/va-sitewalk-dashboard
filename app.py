@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(
@@ -369,11 +368,6 @@ def load_companies():
 
 
 @st.cache_data(ttl=300)
-def load_pipeline_stats():
-    return query("SELECT * FROM pipeline_runs ORDER BY id DESC")
-
-
-@st.cache_data(ttl=300)
 def load_summary():
     return {
         "va_sites": scalar("SELECT COUNT(*) FROM va_sites"),
@@ -423,8 +417,6 @@ page = st.sidebar.radio("Navigate", [
     "Attendees",
     "Companies",
     "Joint Ventures",
-    "Rep Networks",
-    "Pipeline Runs",
 ])
 
 st.sidebar.markdown(
@@ -813,102 +805,3 @@ elif page == "Joint Ventures":
     )
 
 
-# ------------------------------------------------------------------ #
-#  Rep Networks (manufacturer rollups via rep firms)
-# ------------------------------------------------------------------ #
-elif page == "Rep Networks":
-    st.title("Manufacturer Rollups via Rep Networks")
-    st.caption("Attendance credit for a manufacturer (e.g. Leviton) when any of its rep-firm "
-               "reps attend a VA site walk. Pulled from the rep_contacts table.")
-
-    rollups = query("""
-        SELECT r.company_id, r.canonical_name, r.direct_sheets, r.via_rep_sheets,
-               r.combined_sheets, r.direct_solicitations, r.via_rep_solicitations,
-               r.combined_solicitations, r.rep_firms_active
-          FROM company_attendance_rollup r
-         WHERE r.via_rep_sheets > 0
-         ORDER BY r.combined_sheets DESC, r.via_rep_sheets DESC
-    """)
-
-    if rollups.empty:
-        st.info("No manufacturer rollups available. Run the export script after loading rep_contacts.")
-    else:
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Manufacturers tracked", len(rollups))
-        c2.metric("Total rep-firm sheets", int(rollups["via_rep_sheets"].sum()))
-        c3.metric("Combined unique sheets", int(rollups["combined_sheets"].sum()))
-
-        manufacturers = rollups["canonical_name"].tolist()
-        selected = st.selectbox("Manufacturer", manufacturers)
-        row = rollups[rollups["canonical_name"] == selected].iloc[0]
-
-        def _n(v):
-            return 0 if pd.isna(v) else int(v)
-
-        st.subheader(f"{selected} — Attendance Rollup")
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Direct sheets", _n(row["direct_sheets"]))
-        m2.metric("Via-rep sheets", _n(row["via_rep_sheets"]),
-                  help=f"Across {_n(row['rep_firms_active'])} active rep firm(s)")
-        m3.metric("Combined sheets", _n(row["combined_sheets"]),
-                  delta=f"+{_n(row['combined_sheets']) - _n(row['direct_sheets'])} via reps")
-
-        s1, s2, s3 = st.columns(3)
-        s1.metric("Direct solicitations", _n(row["direct_solicitations"]))
-        s2.metric("Via-rep solicitations", _n(row["via_rep_solicitations"]))
-        s3.metric("Combined solicitations", _n(row["combined_solicitations"]))
-
-        per_firm = query(f"""
-            SELECT rc.rep_company,
-                   COUNT(DISTINCT rc.email) AS reps,
-                   COUNT(DISTINCT ka.id) AS reps_in_attendees,
-                   COUNT(DISTINCT aps.station_number) AS sites_covered
-              FROM rep_contacts rc
-              LEFT JOIN known_attendees ka ON lower(ka.email) = lower(rc.email)
-              LEFT JOIN attendee_sites aps ON aps.attendee_id = ka.id
-             WHERE lower(rc.manufacturer) = lower('{selected.replace("'","''")}')
-             GROUP BY rc.rep_company
-             ORDER BY sites_covered DESC, reps DESC
-        """)
-        if not per_firm.empty:
-            st.subheader(f"{selected} — Rep Firms")
-            st.dataframe(per_firm, use_container_width=True, height=400)
-
-        if not rollups.empty:
-            st.subheader("All Manufacturer Rollups")
-            fig = px.bar(rollups.head(20), x="canonical_name",
-                         y=["direct_sheets", "via_rep_sheets"],
-                         title="Direct vs. Via-Rep Attendance",
-                         labels={"value": "Sheets", "canonical_name": "Manufacturer"},
-                         barmode="stack",
-                         color_discrete_sequence=[VA_BLUE, VA_RED])
-            fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig, use_container_width=True)
-            st.dataframe(rollups, use_container_width=True, height=300)
-
-
-# ------------------------------------------------------------------ #
-#  Pipeline Runs
-# ------------------------------------------------------------------ #
-elif page == "Pipeline Runs":
-    st.title("Pipeline Run History")
-    df = load_pipeline_stats()
-
-    if df.empty:
-        st.info("No pipeline runs recorded.")
-    else:
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Runs", len(df))
-        c2.metric("Total Files", int(df["files_processed"].sum()))
-        c3.metric("Total Attendees", int(df["total_attendees"].sum()))
-
-        st.dataframe(df, use_container_width=True, height=400)
-
-        if len(df) > 1:
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=df["id"], y=df["total_attendees"], name="Attendees"))
-            fig.add_trace(go.Bar(x=df["id"], y=df["validated_count"], name="Validated"))
-            fig.add_trace(go.Bar(x=df["id"], y=df["needs_review_count"], name="Needs Review"))
-            fig.update_layout(barmode="group", xaxis_title="Run ID", yaxis_title="Count",
-                              height=350, margin=dict(l=0, r=0, t=30, b=0))
-            st.plotly_chart(fig, use_container_width=True)
