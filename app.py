@@ -1,4 +1,4 @@
-"""VA Site Walk Intelligence Dashboard — Streamlit Cloud Edition
+"""VA Site Walk Network Dashboard — Streamlit Cloud Edition
 
 Reads from bundled SQLite database (no external DB required).
 """
@@ -12,7 +12,7 @@ import plotly.express as px
 import streamlit as st
 
 st.set_page_config(
-    page_title="VA Site Walk Intelligence",
+    page_title="VA Site Walk Network",
     page_icon="\U0001f1fa\U0001f1f8",  # US flag
     layout="wide",
     initial_sidebar_state="expanded",
@@ -440,7 +440,7 @@ def load_jv_members():
 # ------------------------------------------------------------------ #
 #  Sidebar
 # ------------------------------------------------------------------ #
-st.sidebar.title("VA Site Walk Intel")
+st.sidebar.title("VA Site Walk Network")
 page = st.sidebar.radio("Navigate", [
     "Overview",
     "Sites",
@@ -548,7 +548,7 @@ if page == "Overview":
         f"""
         <div class="va-hero">
             <div class="va-hero__left">
-                <h1><svg class="flag" viewBox="0 0 39 26" xmlns="http://www.w3.org/2000/svg" aria-label="US flag" role="img"><rect width="39" height="26" fill="#B22234"/><rect y="2" width="39" height="2" fill="#fff"/><rect y="6" width="39" height="2" fill="#fff"/><rect y="10" width="39" height="2" fill="#fff"/><rect y="14" width="39" height="2" fill="#fff"/><rect y="18" width="39" height="2" fill="#fff"/><rect y="22" width="39" height="2" fill="#fff"/><rect width="16" height="14" fill="#3C3B6E"/><g fill="#fff"><circle cx="2.5" cy="2.5" r="0.6"/><circle cx="6" cy="2.5" r="0.6"/><circle cx="9.5" cy="2.5" r="0.6"/><circle cx="13" cy="2.5" r="0.6"/><circle cx="4.25" cy="5" r="0.6"/><circle cx="7.75" cy="5" r="0.6"/><circle cx="11.25" cy="5" r="0.6"/><circle cx="2.5" cy="7.5" r="0.6"/><circle cx="6" cy="7.5" r="0.6"/><circle cx="9.5" cy="7.5" r="0.6"/><circle cx="13" cy="7.5" r="0.6"/><circle cx="4.25" cy="10" r="0.6"/><circle cx="7.75" cy="10" r="0.6"/><circle cx="11.25" cy="10" r="0.6"/><circle cx="2.5" cy="12.5" r="0.6"/><circle cx="6" cy="12.5" r="0.6"/><circle cx="9.5" cy="12.5" r="0.6"/><circle cx="13" cy="12.5" r="0.6"/></g></svg>VA Site Walk Intelligence</h1>
+                <h1><svg class="flag" viewBox="0 0 39 26" xmlns="http://www.w3.org/2000/svg" aria-label="US flag" role="img"><rect width="39" height="26" fill="#B22234"/><rect y="2" width="39" height="2" fill="#fff"/><rect y="6" width="39" height="2" fill="#fff"/><rect y="10" width="39" height="2" fill="#fff"/><rect y="14" width="39" height="2" fill="#fff"/><rect y="18" width="39" height="2" fill="#fff"/><rect y="22" width="39" height="2" fill="#fff"/><rect width="16" height="14" fill="#3C3B6E"/><g fill="#fff"><circle cx="2.5" cy="2.5" r="0.6"/><circle cx="6" cy="2.5" r="0.6"/><circle cx="9.5" cy="2.5" r="0.6"/><circle cx="13" cy="2.5" r="0.6"/><circle cx="4.25" cy="5" r="0.6"/><circle cx="7.75" cy="5" r="0.6"/><circle cx="11.25" cy="5" r="0.6"/><circle cx="2.5" cy="7.5" r="0.6"/><circle cx="6" cy="7.5" r="0.6"/><circle cx="9.5" cy="7.5" r="0.6"/><circle cx="13" cy="7.5" r="0.6"/><circle cx="4.25" cy="10" r="0.6"/><circle cx="7.75" cy="10" r="0.6"/><circle cx="11.25" cy="10" r="0.6"/><circle cx="2.5" cy="12.5" r="0.6"/><circle cx="6" cy="12.5" r="0.6"/><circle cx="9.5" cy="12.5" r="0.6"/><circle cx="13" cy="12.5" r="0.6"/></g></svg>VA Site Walk Network</h1>
                 <p class="tagline">Tracking EHRM construction procurement across every VA facility &mdash; serving those who served.</p>
                 <div class="va-hero__stats">
                     <span class="stat"><b>{projects_n}</b> Projects</span>
