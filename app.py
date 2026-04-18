@@ -49,10 +49,33 @@ def _suggest_fix_url(kind: str, identifier: str, payload: dict) -> str:
         "<!-- e.g. correct legal name, correct category, link to merge into id=XXXX -->",
         "",
         "**Source / evidence (URL or note):**",
-        "<!-- e.g. company website, LinkedIn page, SAM.gov record -->",
+        "<!-- e.g. company website, public business registry, SAM.gov record -->",
     ])
     body = "\n".join(lines)
     qs = urlencode({"title": title, "body": body, "labels": "data-correction"})
+    return f"{GITHUB_ISSUES_URL}?{qs}"
+
+
+def _suggest_solicitation_url() -> str:
+    """Build a pre-filled GitHub Issue URL for suggesting a solicitation to add."""
+    from urllib.parse import urlencode
+    title = "Suggest a solicitation"
+    body = "\n".join([
+        "**Solicitation number(s):**",
+        "<!-- e.g. 36C77625R0042 — one per line if multiple -->",
+        "",
+        "**SAM.gov link (if you have it):**",
+        "<!-- https://sam.gov/opp/... -->",
+        "",
+        "**VA facility / city:**",
+        "<!-- e.g. Memphis VAMC -->",
+        "",
+        "**Site walk date (if known):**",
+        "",
+        "**Anything else useful?**",
+        "<!-- contracting office, awarded prime, sign-in sheet PDF link, etc. -->",
+    ])
+    qs = urlencode({"title": title, "body": body, "labels": "solicitation-suggestion"})
     return f"{GITHUB_ISSUES_URL}?{qs}"
 
 st.markdown(
@@ -479,6 +502,20 @@ st.sidebar.markdown(
            ">
             🛠️ Report an issue / suggest a fix &rarr;
         </a>
+        <a href="{_suggest_solicitation_url()}"
+           target="_blank" rel="noopener"
+           style="
+               display: block;
+               color: white !important;
+               text-decoration: none;
+               padding: 0.5rem 0.7rem;
+               font-size: 0.88rem;
+               font-weight: 600;
+               border-left: 3px solid {VA_GOLD};
+               margin-bottom: 0.4rem;
+           ">
+            📋 Suggest a solicitation &rarr;
+        </a>
         <a href="https://github.com/tredding-wq/va-sitewalk-dashboard"
            target="_blank" rel="noopener"
            style="
@@ -698,6 +735,15 @@ elif page == "Sites":
 elif page == "Projects":
     st.title("EHRM Projects Directory")
     df = load_projects()
+
+    title_col, action_col = st.columns([4, 1])
+    with action_col:
+        st.link_button(
+            "📋 Suggest a solicitation",
+            _suggest_solicitation_url(),
+            use_container_width=True,
+            help="Know a VA EHRM solicitation that isn't in this directory? Send it our way.",
+        )
 
     col1, col2 = st.columns(2)
     with col1:
@@ -1237,11 +1283,15 @@ in the hospitals we build together deserve our support.
     # ---------- Get involved ----------
     st.header("Get involved")
     st.markdown(
-        """
-- 📤 **Upload a sign-in sheet** you attended
-- 🐙 **Star or fork the repo** on GitHub
-- ✉️ **Submit corrections** on any directory entry
-- 💬 **Tell a colleague** — the directory is only as strong as the community
+        f"""
+- 📋 **[Suggest a solicitation]({_suggest_solicitation_url()})** — know a VA
+  EHRM solicitation we haven't ingested yet? Send it our way and we'll pull
+  the sign-in sheets in.
+- ✉️ **Submit a correction** on any company or attendee row using the
+  "Suggest a fix" button in its detail panel.
+- 🐙 **Star or fork the repo** on GitHub.
+- 📤 **Upload a sign-in sheet** you attended (coming soon).
+- 💬 **Tell a colleague** — the directory is only as strong as the community.
         """
     )
 
