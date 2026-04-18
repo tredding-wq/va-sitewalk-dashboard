@@ -418,7 +418,8 @@ def load_companies():
         SELECT kc.id, kc.canonical_name, kc.primary_category,
                COALESCE(NULLIF(kc.sheets_with_jvs, 0), kc.times_seen) AS times_seen,
                kc.email_domains, kc.website, kc.sam_uei, kc.sam_cage,
-               kc.primary_naics, kc.certifications, kc.last_seen,
+               kc.primary_naics, kc.certifications,
+               kc.last_sitewalk_date AS last_seen,
                COALESCE(kc.is_sdvosb_va_prime, 0) AS sdvosb_prime,
                kc.va_prime_total_obligated, kc.va_prime_award_count,
                kc.sites_visited_text AS sites_list
@@ -1138,6 +1139,13 @@ elif page == "Companies":
             "website": st.column_config.LinkColumn(
                 "Website",
                 display_text=r"https?://(?:www\.)?([^/]+).*",
+            ),
+            "last_seen": st.column_config.DateColumn(
+                "Last Sitewalk",
+                help="Date of the most recent site walk this company attended "
+                     "(extracted from the sign-in sheet filename). Blank when "
+                     "the sheet didn't have a parseable date.",
+                format="YYYY-MM-DD",
             ),
         },
     )
