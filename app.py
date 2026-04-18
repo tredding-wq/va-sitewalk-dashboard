@@ -303,7 +303,14 @@ def load_sites():
                vs.city, vs.state, vs.zip, vs.street1, vs.phone, vs.category_id,
                vs.latitude, vs.longitude,
                COALESCE(p.cnt, 0) AS project_count,
-               COALESCE(a.cnt, 0) AS attendee_count
+               COALESCE(a.cnt, 0) AS attendee_count,
+               pl.formatted_address AS gp_address,
+               pl.formatted_phone AS gp_phone,
+               pl.website AS gp_website,
+               pl.maps_url AS gp_maps_url,
+               pl.hours_json AS gp_hours_json,
+               pl.photo_filename AS gp_photo,
+               pl.photo_attribution AS gp_photo_attribution
         FROM va_sites vs
         LEFT JOIN (SELECT station_number, COUNT(*) cnt FROM projects
                    WHERE station_number IS NOT NULL GROUP BY station_number) p
@@ -311,6 +318,7 @@ def load_sites():
         LEFT JOIN (SELECT station_number, COUNT(*) cnt FROM attendee_sites
                    GROUP BY station_number) a
             ON a.station_number = vs.station_number
+        LEFT JOIN va_sites_places pl ON pl.station_number = vs.station_number
         ORDER BY (COALESCE(p.cnt,0) + COALESCE(a.cnt,0)) DESC, vs.station_number
     """)
     df["facility_type"] = df["station_name"].apply(_facility_type)
@@ -686,13 +694,15 @@ elif page == "Sites":
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        visn_filter = st.multiselect("Filter by VISN", sorted(df["visn"].dropna().unique()))
+        visn_filter = st.multiselect("VISN", sorted(df["visn"].dropna().unique()))
     with col2:
-        state_filter = st.multiselect("Filter by State", sorted(df["state"].dropna().unique()))
+        state_filter = st.multiselect("State", sorted(df["state"].dropna().unique()))
     with col3:
-        type_filter = st.multiselect("Filter by Type", sorted(df["facility_type"].dropna().unique()))
+        type_filter = st.multiselect("Facility Type", sorted(df["facility_type"].dropna().unique()))
     with col4:
-        show_with_projects = st.checkbox("Only sites with projects", value=False)
+        view_mode = st.radio("View", ["Cards", "Table", "Map"], horizontal=True, label_visibility="collapsed")
+
+    search = st.text_input("Search by name, city, or station number", placeholder="e.g. Memphis, 614, Hampton")
 
     if visn_filter:
         df = df[df["visn"].isin(visn_filter)]
@@ -700,33 +710,235 @@ elif page == "Sites":
         df = df[df["state"].isin(state_filter)]
     if type_filter:
         df = df[df["facility_type"].isin(type_filter)]
-    if show_with_projects:
-        df = df[df["project_count"] > 0]
+    if search:
+        s = search.lower().strip()
+        df = df[
+            df["station_name"].str.lower().str.contains(s, na=False)
+            | df["city"].str.lower().str.contains(s, na=False)
+            | df["station_number"].astype(str).str.lower().str.contains(s, na=False)
+        ]
 
-    st.metric("Showing", f"{len(df)} sites")
+    show_active_only = st.toggle("Only sites with project / attendee activity", value=True)
+    if show_active_only:
+        df = df[(df["project_count"] > 0) | (df["attendee_count"] > 0)]
 
-    map_df = df.dropna(subset=["latitude", "longitude"])
-    map_df = map_df[(map_df["latitude"] != 0) & (map_df["longitude"] != 0)]
-    if not map_df.empty:
-        fig = px.scatter_geo(
-            map_df, lat="latitude", lon="longitude",
-            hover_name="station_name",
-            hover_data=["station_number", "facility_type", "city", "state", "visn", "project_count", "attendee_count"],
-            size=map_df["project_count"].clip(lower=1),
-            size_max=10,
-            color="project_count",
-            color_continuous_scale=[[0, "#A9C1DC"], [1, VA_BLUE]],
-            scope="usa", height=450,
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Sites Shown", f"{len(df):,}")
+    m2.metric("With Projects", int((df["project_count"] > 0).sum()))
+    m3.metric("With Photos", int(df["gp_photo"].notna().sum() if "gp_photo" in df else 0))
+
+    # ---------- MAP VIEW ----------
+    if view_mode == "Map":
+        map_df = df.dropna(subset=["latitude", "longitude"])
+        map_df = map_df[(map_df["latitude"] != 0) & (map_df["longitude"] != 0)]
+        if map_df.empty:
+            st.info("No sites with coordinates match these filters.")
+        else:
+            fig = px.scatter_geo(
+                map_df, lat="latitude", lon="longitude",
+                hover_name="station_name",
+                hover_data=["station_number", "facility_type", "city", "state", "visn",
+                            "project_count", "attendee_count"],
+                size=map_df["project_count"].clip(lower=1),
+                size_max=14,
+                color="project_count",
+                color_continuous_scale=[[0, "#A9C1DC"], [1, VA_BLUE]],
+                scope="usa", height=600,
+            )
+            fig.update_layout(margin=dict(l=0, r=0, t=0, b=0),
+                              geo=dict(bgcolor="rgba(0,0,0,0)", lakecolor="white"))
+            st.plotly_chart(fig, use_container_width=True)
+
+    # ---------- TABLE VIEW ----------
+    elif view_mode == "Table":
+        st.dataframe(
+            df[["station_number", "station_name", "facility_type", "city", "state", "visn",
+                "project_count", "attendee_count", "gp_phone", "gp_address"]].rename(columns={
+                "gp_phone": "phone", "gp_address": "address",
+            }),
+            use_container_width=True, height=620,
         )
-        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0),
-                          geo=dict(bgcolor="rgba(0,0,0,0)", lakecolor="white"))
-        st.plotly_chart(fig, use_container_width=True)
 
-    st.dataframe(
-        df[["station_number", "station_name", "facility_type", "city", "state", "visn",
-            "project_count", "attendee_count", "phone", "street1"]],
-        use_container_width=True, height=500,
-    )
+    # ---------- CARD VIEW (default) ----------
+    else:
+        # Inject card CSS
+        st.markdown(
+            f"""
+            <style>
+            .vasite-card {{
+                background: white; border: 1px solid #E0E5EC; border-radius: 12px;
+                overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                margin-bottom: 1.2rem; transition: box-shadow 0.15s ease;
+                display: flex; flex-direction: column; height: 100%;
+            }}
+            .vasite-card:hover {{ box-shadow: 0 6px 16px rgba(0,0,0,0.12); }}
+            .vasite-photo {{
+                width: 100%; height: 160px; object-fit: cover;
+                background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_BLUE} 60%, {VA_RED} 100%);
+                display: block;
+            }}
+            .vasite-photo-fallback {{
+                width: 100%; height: 160px;
+                background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_BLUE} 60%, {VA_RED} 100%);
+                display: flex; align-items: center; justify-content: center;
+                color: white; font-size: 2.4rem; font-weight: 800;
+                letter-spacing: 0.05em;
+            }}
+            .vasite-body {{ padding: 1rem 1.1rem 1.1rem; flex: 1; display: flex; flex-direction: column; }}
+            .vasite-station {{
+                color: {VA_RED}; font-size: 0.7rem; letter-spacing: 0.12em;
+                text-transform: uppercase; font-weight: 800; margin-bottom: 0.25rem;
+            }}
+            .vasite-name {{
+                color: {VA_BLUE}; font-size: 1.05rem; font-weight: 700;
+                line-height: 1.25; margin-bottom: 0.5rem;
+            }}
+            .vasite-type-tag {{
+                display: inline-block; background: {VA_GOLD}; color: {VA_BLUE};
+                font-size: 0.66rem; font-weight: 800; padding: 0.18rem 0.5rem;
+                border-radius: 4px; letter-spacing: 0.08em; text-transform: uppercase;
+                margin-right: 0.4rem;
+            }}
+            .vasite-visn-tag {{
+                display: inline-block; background: #E8F0FA; color: {VA_BLUE};
+                font-size: 0.66rem; font-weight: 700; padding: 0.18rem 0.5rem;
+                border-radius: 4px; letter-spacing: 0.04em;
+            }}
+            .vasite-row {{
+                display: flex; align-items: flex-start; gap: 0.45rem;
+                font-size: 0.85rem; color: #333; margin: 0.4rem 0; line-height: 1.35;
+            }}
+            .vasite-row-icon {{ width: 16px; flex-shrink: 0; opacity: 0.6; padding-top: 0.1rem; }}
+            .vasite-row a {{ color: {VA_BLUE} !important; text-decoration: none; }}
+            .vasite-row a:hover {{ text-decoration: underline; }}
+            .vasite-stats {{
+                display: flex; gap: 1rem; padding: 0.6rem 0;
+                margin-top: 0.6rem; border-top: 1px solid #E8EDF3;
+                font-size: 0.78rem; color: #555;
+            }}
+            .vasite-stats b {{ color: {VA_BLUE}; font-size: 1.05rem; display: block; line-height: 1; }}
+            .vasite-actions {{ display: flex; gap: 0.5rem; margin-top: auto; padding-top: 0.6rem; }}
+            .vasite-action {{
+                flex: 1; text-align: center; padding: 0.5rem 0.6rem;
+                background: {VA_BLUE}; color: white !important; text-decoration: none !important;
+                border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+                letter-spacing: 0.02em;
+            }}
+            .vasite-action:hover {{ background: {VA_RED}; }}
+            .vasite-action.secondary {{ background: white; color: {VA_BLUE} !important; border: 1px solid {VA_BLUE}; }}
+            .vasite-action.secondary:hover {{ background: #F0F4FA; }}
+            .vasite-attribution {{
+                font-size: 0.6rem; color: #999; padding: 0.25rem 1.1rem 0.4rem;
+                line-height: 1.3;
+            }}
+            .vasite-attribution a {{ color: #999 !important; }}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if df.empty:
+            st.info("No sites match these filters.")
+        else:
+            # Sort by activity, then alpha
+            df_sorted = df.sort_values(
+                ["project_count", "attendee_count", "station_name"],
+                ascending=[False, False, True],
+            )
+            page_size = 24
+            total = len(df_sorted)
+            page_num = st.number_input(
+                f"Page (showing {page_size} per page, {total} total)",
+                min_value=1, max_value=max(1, (total + page_size - 1) // page_size),
+                value=1, step=1,
+            )
+            start = (page_num - 1) * page_size
+            page_df = df_sorted.iloc[start:start + page_size]
+
+            cols_per_row = 3
+            rows_data = [page_df.iloc[i:i + cols_per_row] for i in range(0, len(page_df), cols_per_row)]
+            for row_chunk in rows_data:
+                cols = st.columns(cols_per_row)
+                for i, (_, site) in enumerate(row_chunk.iterrows()):
+                    with cols[i]:
+                        # Photo or fallback gradient with station number initials
+                        photo_filename = site.get("gp_photo")
+                        if photo_filename and pd.notna(photo_filename):
+                            photo_html = f'<img class="vasite-photo" src="app/static/site_photos/{photo_filename}" alt="{site["station_name"]}">'
+                        else:
+                            initials = "".join(w[0] for w in (site["station_name"] or "VA").split()[:3]).upper()
+                            photo_html = f'<div class="vasite-photo-fallback">{initials}</div>'
+
+                        addr = site.get("gp_address") or (
+                            f"{site.get('street1') or ''}, {site.get('city') or ''}, {site.get('state') or ''} {site.get('zip') or ''}".strip(", ")
+                        ) or "Address unavailable"
+                        phone = site.get("gp_phone") or site.get("phone") or ""
+                        website = site.get("gp_website") or ""
+                        maps_url = site.get("gp_maps_url") or (
+                            f"https://www.google.com/maps/search/?api=1&query={site['latitude']},{site['longitude']}"
+                            if pd.notna(site.get("latitude")) and site.get("latitude") else ""
+                        )
+                        directions_url = (
+                            f"https://www.google.com/maps/dir/?api=1&destination_place_id="
+                            if False else
+                            f"https://www.google.com/maps/dir/?api=1&destination=" +
+                            (addr.replace(" ", "+") if addr else f"{site['latitude']},{site['longitude']}")
+                        )
+
+                        phone_html = (
+                            f'<div class="vasite-row"><span class="vasite-row-icon">📞</span><a href="tel:{phone}">{phone}</a></div>'
+                            if phone else ""
+                        )
+                        website_html = (
+                            f'<div class="vasite-row"><span class="vasite-row-icon">🌐</span><a href="{website}" target="_blank" rel="noopener">Official site</a></div>'
+                            if website else ""
+                        )
+                        addr_html = (
+                            f'<div class="vasite-row"><span class="vasite-row-icon">📍</span><span>{addr}</span></div>'
+                            if addr else ""
+                        )
+                        visn_chip = f'<span class="vasite-visn-tag">VISN {site["visn"]}</span>' if pd.notna(site.get("visn")) and site.get("visn") else ""
+                        type_chip = f'<span class="vasite-type-tag">{site["facility_type"]}</span>' if site.get("facility_type") else ""
+
+                        attribution = site.get("gp_photo_attribution") or ""
+                        attribution_html = f'<div class="vasite-attribution">Photo: {attribution}</div>' if attribution else ""
+
+                        directions_btn = (
+                            f'<a class="vasite-action" href="{directions_url}" target="_blank" rel="noopener">Directions →</a>'
+                            if directions_url else ""
+                        )
+                        maps_btn = (
+                            f'<a class="vasite-action secondary" href="{maps_url}" target="_blank" rel="noopener">View on Maps</a>'
+                            if maps_url else ""
+                        )
+
+                        st.markdown(
+                            f"""
+                            <div class="vasite-card">
+                                {photo_html}
+                                <div class="vasite-body">
+                                    <div class="vasite-station">Station {site['station_number']}</div>
+                                    <div class="vasite-name">{site['station_name']}</div>
+                                    <div style="margin-bottom:0.6rem;">
+                                        {type_chip}{visn_chip}
+                                    </div>
+                                    {addr_html}
+                                    {phone_html}
+                                    {website_html}
+                                    <div class="vasite-stats">
+                                        <div><b>{int(site['project_count'])}</b>Projects</div>
+                                        <div><b>{int(site['attendee_count'])}</b>Attendees</div>
+                                    </div>
+                                    <div class="vasite-actions">
+                                        {directions_btn}
+                                        {maps_btn}
+                                    </div>
+                                </div>
+                                {attribution_html}
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
 
 # ------------------------------------------------------------------ #
