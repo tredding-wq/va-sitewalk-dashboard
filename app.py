@@ -1106,8 +1106,7 @@ accelerate that timeline.
             - Names, companies, phone numbers, and emails may contain **transcription errors**
             - The pipeline runs multiple OCR passes and falls back through several
               engines to reduce error rate
-            - When a name looks suspicious (e.g. *"Tallow Construction"* vs the real
-              *"Tallon Construction"*) it gets cross-checked against public sources
+            - Suspicious-looking names get cross-checked against public sources
               before being merged
             - **Some errors will still slip through** — when you spot one, the
               "Suggest a fix" button on any row pre-fills a GitHub issue with the
@@ -1129,10 +1128,9 @@ accelerate that timeline.
               firm's actual day-to-day work
             - Multi-trade firms appear under a single primary category — secondary
               capabilities aren't surfaced today
-            - The **Manufacturer Rep** category is reserved for actual rep firms
-              representing specific product lines (e.g. Leviton's rep network),
-              not distributors like Anixter / WESCO / Graybar / Accu-Tech, which
-              get the **Distributor** tag
+            - The **Manufacturer Rep** category is reserved for rep firms
+              representing specific product lines, not distributors that resell
+              many brands — those carry the **Distributor** tag
 
             Use categories to narrow a search — then verify capabilities directly
             with the firm.
@@ -1143,9 +1141,9 @@ accelerate that timeline.
         st.markdown(
             """
             A single real-world company can show up on site walk sheets under many
-            variations: *"Richard Group,"* *"Richard Group LLC,"* *"RICHARD GROUP,"*
-            *"Bridger-National Richard Group JV."* The directory rolls those up so
-            you see one row, with the full history attached. Here's how:
+            name variations across casing, punctuation, and JV partnerships. The
+            directory rolls those up so you see one row, with the full history
+            attached. Here's how:
 
             **Match on shared identifiers (high confidence)**
             Rows that share a SAM.gov UEI, an email domain, or a website are
@@ -1157,10 +1155,9 @@ accelerate that timeline.
             there has to be an external source confirming the match.
 
             **JV and rep-network rollups**
-            For prime contractors (like Richard Group LLC) and manufacturers (like
-            Leviton), affiliated JV partners and rep firms roll up under the
-            parent so the prime gets credit for its network's site walk
-            attendance — without the JV row itself disappearing from the data.
+            Prime contractors and manufacturers get credit for site walks their
+            JV partners and rep firms attend on their behalf. The JV / rep
+            entity stays in the data; its attendance also rolls up to the parent.
 
             **What this means for you:**
             - One company = one row, with all variant sign-ins folded together
