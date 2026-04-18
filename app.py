@@ -844,100 +844,257 @@ elif page == "Joint Ventures":
 #  About
 # ------------------------------------------------------------------ #
 elif page == "About":
-    st.title("About")
+    st.title("About VA Sitewalk")
+    st.caption("An open-source project to make construction projects run more smoothly — and to connect the best people in the industry.")
 
+    st.divider()
+
+    # ---------- Mission ----------
+    st.header("Our mission")
     st.markdown(
-        f"""
-        ## Connecting the construction industry to serve those who served
+        """
+Construction runs on relationships. The best superintendents, subs, reps, and
+vendors are known to the people who've worked with them — and invisible to
+everyone else.
 
-        This dashboard exists to make VA EHRM (Electronic Health Record
-        Modernization) construction projects **more beneficial to veterans** by
-        giving the people who build them better information about who is at the
-        table.
+**VA Sitewalk** exists to change that. It's an open-source tool that takes the
+handwritten sign-in sheets from pre-bid site walks on VA construction projects
+and turns them into a shared, searchable directory of the firms and
+professionals who actually show up and do the work.
 
-        ### Why this exists
-        Every VA facility that receives the new EHRM infrastructure starts with
-        a **site walk** — an in-person walkthrough where the VA, contracting
-        officers, A/E firms, prime GCs, subcontractors, manufacturers, and
-        product reps all show up to understand scope. These sign-in sheets are
-        public record, but they're scattered across hundreds of PDFs on
-        SAM.gov. No one has ever had the full picture of:
-
-        - Which contractors are actively pursuing VA EHRM work
-        - Which facilities get the most industry engagement
-        - Which rep firms bring product expertise (Leviton, CommScope, etc.)
-        - Who partners with whom on joint ventures
-        - Which SDVOSB primes are winning awards
-
-        This dashboard pulls all of that into one place.
-
-        ### Who it's for
-        - **SDVOSB and veteran-owned contractors** looking for teaming partners
-          and projects to bid
-        - **Manufacturer rep firms** tracking where their specifications
-          show up
-        - **GCs and subs** who want to know the landscape before committing
-          bid/pursuit resources
-        - **VA procurement staff** looking at industry engagement trends
-        - **Anyone** trying to make sure the companies delivering veteran
-          healthcare infrastructure are the right ones
-
-        ### How the data gets here
-        - Sign-in sheets are downloaded from SAM.gov EHRM solicitations
-        - OCR'd via Gemini 2.5 Flash (primary) with OpenRouter/Qwen, LlamaParse,
-          and Tesseract as fallbacks
-        - Attendees, companies, and sites are extracted, validated against
-          SAM.gov entity data, and cross-referenced with published rep
-          networks
-        - Duplicates and OCR errors are resolved using Google Search
-          grounding — no guesses, every merge cited
-        - All numbers (sheet counts, rep-appearances, sites visited) are
-          computed from the raw records, so the dashboard always reflects the
-          actual source PDFs
-
-        ### Mission alignment
-        The donation link in the sidebar points to the
-        [Wounded Warrior Project](https://www.woundedwarriorproject.org/donate).
-        This dashboard isn't affiliated with WWP or the U.S. Department of
-        Veterans Affairs — but the same instinct drives it. **The people who
-        built the buildings where veterans get care should have the best tools
-        to do it well.**
-
-        ### Data caveats
-        - Sign-in sheets are handwritten; OCR isn't perfect
-        - Company categories (GC / subcontractor / rep / manufacturer) are
-          best-effort based on SAM.gov NAICS codes + LLM classification with
-          public-source verification
-        - "Times Seen" counts distinct sign-in sheets, not reps sent
-          (see the `rep_appearances` column for that)
-        - Joint ventures and rep networks roll up into their parent company's
-          totals to avoid splitting credit
-
-        Feedback and corrections: if you see a contractor listed incorrectly
-        or missing, please reach out.
-        """,
-        unsafe_allow_html=False,
+We believe that better information in the hands of the people building America's
+veterans hospitals makes for smoother projects, fairer competition, and stronger
+connections across the industry.
+        """
     )
 
+    # ---------- What you can do ----------
+    st.header("What you can do here")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.subheader("🔍 Discover")
+        st.markdown(
+            """
+            Search contractors, subs, and reps by trade, region, or VA facility.
+            Find the firms that consistently pursue and deliver VA healthcare
+            construction work.
+            """
+        )
+
+    with col2:
+        st.subheader("🤝 Connect")
+        st.markdown(
+            """
+            See who's walking the same jobs you are. Reach out to potential
+            partners, subs, or GCs before bid day — not after award.
+            """
+        )
+
+    with col3:
+        st.subheader("📈 Contribute")
+        st.markdown(
+            """
+            Upload site walk sheets from projects you've attended. Every
+            contribution makes the directory better for the whole industry.
+            """
+        )
+
+    st.divider()
+
+    # ---------- How it works ----------
+    st.header("How it works")
     st.markdown(
-        f"""
-        <div style="
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_RED} 100%);
-            border-radius: 10px;
-            color: white;
-            text-align: center;
-        ">
-            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem;">
-                Built to serve those who served.
-            </div>
-            <div style="font-size: 0.9rem; opacity: 0.9;">
-                Open source · Not affiliated with the U.S. Department of Veterans Affairs
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+        """
+1. **Sign-in sheets come in** as scanned PDFs — from solicitation archives,
+   user uploads, or FOIA releases.
+2. **OCR extracts** names, companies, trades, and contact info using Google
+   Cloud Vision, tuned for handwriting.
+3. **Entity resolution** cross-references each firm against SAM.gov and
+   broader web sources to clean up misspellings and merge duplicates.
+4. **The directory grows** — searchable by anyone, free forever.
+        """
+    )
+
+    # ---------- Open source ----------
+    st.header("Open source, by design")
+    st.markdown(
+        """
+This project is open source because the construction industry deserves shared
+infrastructure, not another walled garden. The code, the pipeline, and the
+directory are all public.
+
+- **Use it** to find partners, subs, or reps for your next VA project
+- **Fork it** to build similar tools for other agencies or sectors
+- **Improve it** by submitting site walk sheets, corrections, or pull requests
+
+We welcome contributions from GCs, subs, manufacturers, reps, architects,
+engineers, owners, and anyone else who wants construction to work better.
+        """
+    )
+
+    # ---------- Scope ----------
+    st.header("Current scope")
+    st.markdown(
+        """
+- **Projects:** VA construction and EHRM infrastructure work
+- **Documents:** Pre-bid and pre-construction site walk sign-in sheets
+- **Geography:** Nationwide, growing as contributions come in
+
+Other agencies and project types are on the roadmap — contributions
+accelerate that timeline.
+        """
+    )
+
+    # ---------- Data caveats (prominent) ----------
+    st.header("⚠️ Data caveats — please read")
+
+    st.warning(
+        "VA Sitewalk is a best-effort tool built on imperfect inputs. "
+        "Treat the directory as a starting point for research, not as a system of record."
+    )
+
+    with st.expander("📝 OCR is imperfect", expanded=True):
+        st.markdown(
+            """
+            Sign-in sheets are handwritten, often in pen, on clipboards, in the
+            rain. Even the best OCR misreads handwriting.
+
+            - Names, companies, phone numbers, and emails may contain **transcription errors**
+            - We flag low-confidence rows but do not drop them — reviewers can see the confidence score
+            - The **original scanned sheet** is linked on every record so you can verify against the source
+            - If you spot an error, **submit a correction** — it helps everyone
+            """
+        )
+
+    with st.expander("🏷️ Trade categories are best-effort", expanded=True):
+        st.markdown(
+            """
+            Trade classifications (electrical, low-voltage, mechanical, structured
+            cabling, etc.) are assigned by a mix of keyword rules, SAM.gov NAICS
+            codes, and web-based inference. They are **directional, not authoritative**.
+
+            - A firm tagged "electrical" may also do low-voltage, controls, or other scopes
+            - Categories skew toward what a firm is *known for publicly*, not necessarily what
+              they bid on a given project
+            - NAICS codes on SAM.gov are self-reported and often broader than actual capabilities
+            - Multi-trade firms may appear under a primary category only
+
+            Use categories to narrow a search — then verify capabilities directly with the firm.
+            """
+        )
+
+    with st.expander("🧮 How rollup logic works", expanded=True):
+        st.markdown(
+            """
+            A single real-world company can show up on site walk sheets under many
+            variations: *"ABC Electric,"* *"ABC Elec Co,"* *"ABC Electrical Inc."*
+            VA Sitewalk rolls these up to a canonical entity. Here's how:
+
+            **Step 1 — Normalization**
+            Strip punctuation, legal suffixes (Inc, LLC, Co, Corp), and whitespace.
+            Lowercase everything.
+
+            **Step 2 — Exact match on identifiers**
+            If two rows share a SAM.gov UEI, CAGE code, or a confirmed website
+            domain, they roll up immediately. High confidence.
+
+            **Step 3 — Fuzzy name match**
+            Remaining rows are compared using string similarity (token-based) plus
+            a Google Search resolver that checks whether candidate variants resolve
+            to the same canonical business. Medium confidence — scored and reviewable.
+
+            **Step 4 — Geographic tiebreaker**
+            If two similar names appear with conflicting locations (e.g., "ABC
+            Electric" in OH vs. TX), they are **kept separate** unless evidence
+            links them (same parent, same UEI, etc.).
+
+            **What this means for you:**
+            - One company = one row in the directory, with all site walks rolled under it
+            - Attendance counts (*"walked 12 VA projects"*) are rollup-based
+            - **False merges are possible** — flag them and we'll split the record
+            - **False splits are possible** — flag them and we'll merge
+            """
+        )
+
+    with st.expander("📅 Coverage is uneven"):
+        st.markdown(
+            """
+            The directory only contains what's been ingested. Coverage depends on
+            which sign-in sheets we (and contributors) have been able to source.
+
+            - Some VAMCs and regions are well-represented; others have no coverage yet
+            - Absence from the directory does **not** mean a firm doesn't work on VA projects
+            - Presence does **not** guarantee current activity — check the most recent
+              site walk date on each record
+            """
+        )
+
+    with st.expander("🔒 Privacy and contact info"):
+        st.markdown(
+            """
+            Names, phone numbers, and emails are published as they appeared on
+            public pre-bid sign-in sheets — documents that are part of federal
+            solicitation records.
+
+            - Individuals can request removal at any time
+            - We do not scrape private databases, LinkedIn, or paid contact providers
+            - If you believe a record violates your privacy, contact us and we will remove it
+            """
+        )
+
+    st.divider()
+
+    # ---------- Principles ----------
+    st.header("Principles")
+    st.markdown(
+        """
+- **Accuracy over volume.** Low-confidence OCR rows are flagged for review,
+  not silently published.
+- **Respect for the people in the data.** Contact info is published as it
+  appeared on public sign-in sheets; removal requests are honored.
+- **Free and open.** No paywalls, no gated features, no data resale.
+- **Industry-first.** Decisions are made with working contractors and
+  vendors in mind — not investors.
+        """
+    )
+
+    st.divider()
+
+    # ---------- Giving back ----------
+    st.header("Giving back to those who served")
+    st.markdown(
+        """
+This project exists because of VA construction — work that ultimately serves
+the veterans who served us. It feels right to give something back.
+
+**A portion of any revenue or donations this project receives goes to the
+[Wounded Warrior Project](https://www.woundedwarriorproject.org/)**, which
+supports injured post-9/11 veterans and their families.
+
+If VA Sitewalk saves you time or helps you land a project, consider donating
+to Wounded Warrior Project directly. The veterans who will one day be treated
+in the hospitals we build together deserve our support.
+        """
+    )
+
+    st.divider()
+
+    # ---------- Get involved ----------
+    st.header("Get involved")
+    st.markdown(
+        """
+- 📤 **Upload a sign-in sheet** you attended
+- 🐙 **Star or fork the repo** on GitHub
+- ✉️ **Submit corrections** on any directory entry
+- 💬 **Tell a colleague** — the directory is only as strong as the community
+        """
+    )
+
+    st.caption(
+        "VA Sitewalk is an independent open-source project. "
+        "Not affiliated with or endorsed by the U.S. Department of Veterans Affairs."
     )
 
 
