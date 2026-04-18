@@ -417,6 +417,7 @@ page = st.sidebar.radio("Navigate", [
     "Attendees",
     "Companies",
     "Joint Ventures",
+    "About",
 ])
 
 st.sidebar.markdown(
@@ -836,6 +837,107 @@ elif page == "Joint Ventures":
         jv_companies[["canonical_name", "primary_category", "times_seen",
                        "website", "sam_uei", "email_domains"]],
         use_container_width=True, height=400,
+    )
+
+
+# ------------------------------------------------------------------ #
+#  About
+# ------------------------------------------------------------------ #
+elif page == "About":
+    st.title("About")
+
+    st.markdown(
+        f"""
+        ## Connecting the construction industry to serve those who served
+
+        This dashboard exists to make VA EHRM (Electronic Health Record
+        Modernization) construction projects **more beneficial to veterans** by
+        giving the people who build them better information about who is at the
+        table.
+
+        ### Why this exists
+        Every VA facility that receives the new EHRM infrastructure starts with
+        a **site walk** — an in-person walkthrough where the VA, contracting
+        officers, A/E firms, prime GCs, subcontractors, manufacturers, and
+        product reps all show up to understand scope. These sign-in sheets are
+        public record, but they're scattered across hundreds of PDFs on
+        SAM.gov. No one has ever had the full picture of:
+
+        - Which contractors are actively pursuing VA EHRM work
+        - Which facilities get the most industry engagement
+        - Which rep firms bring product expertise (Leviton, CommScope, etc.)
+        - Who partners with whom on joint ventures
+        - Which SDVOSB primes are winning awards
+
+        This dashboard pulls all of that into one place.
+
+        ### Who it's for
+        - **SDVOSB and veteran-owned contractors** looking for teaming partners
+          and projects to bid
+        - **Manufacturer rep firms** tracking where their specifications
+          show up
+        - **GCs and subs** who want to know the landscape before committing
+          bid/pursuit resources
+        - **VA procurement staff** looking at industry engagement trends
+        - **Anyone** trying to make sure the companies delivering veteran
+          healthcare infrastructure are the right ones
+
+        ### How the data gets here
+        - Sign-in sheets are downloaded from SAM.gov EHRM solicitations
+        - OCR'd via Gemini 2.5 Flash (primary) with OpenRouter/Qwen, LlamaParse,
+          and Tesseract as fallbacks
+        - Attendees, companies, and sites are extracted, validated against
+          SAM.gov entity data, and cross-referenced with published rep
+          networks
+        - Duplicates and OCR errors are resolved using Google Search
+          grounding — no guesses, every merge cited
+        - All numbers (sheet counts, rep-appearances, sites visited) are
+          computed from the raw records, so the dashboard always reflects the
+          actual source PDFs
+
+        ### Mission alignment
+        The donation link in the sidebar points to the
+        [Wounded Warrior Project](https://www.woundedwarriorproject.org/donate).
+        This dashboard isn't affiliated with WWP or the U.S. Department of
+        Veterans Affairs — but the same instinct drives it. **The people who
+        built the buildings where veterans get care should have the best tools
+        to do it well.**
+
+        ### Data caveats
+        - Sign-in sheets are handwritten; OCR isn't perfect
+        - Company categories (GC / subcontractor / rep / manufacturer) are
+          best-effort based on SAM.gov NAICS codes + LLM classification with
+          public-source verification
+        - "Times Seen" counts distinct sign-in sheets, not reps sent
+          (see the `rep_appearances` column for that)
+        - Joint ventures and rep networks roll up into their parent company's
+          totals to avoid splitting credit
+
+        Feedback and corrections: if you see a contractor listed incorrectly
+        or missing, please reach out.
+        """,
+        unsafe_allow_html=False,
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_RED} 100%);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        ">
+            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem;">
+                Built to serve those who served.
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                Open source · Not affiliated with the U.S. Department of Veterans Affairs
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 
