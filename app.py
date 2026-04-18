@@ -549,7 +549,7 @@ if page == "Overview":
         <div class="va-hero">
             <div class="va-hero__left">
                 <h1><svg class="flag" viewBox="0 0 39 26" xmlns="http://www.w3.org/2000/svg" aria-label="US flag" role="img"><rect width="39" height="26" fill="#B22234"/><rect y="2" width="39" height="2" fill="#fff"/><rect y="6" width="39" height="2" fill="#fff"/><rect y="10" width="39" height="2" fill="#fff"/><rect y="14" width="39" height="2" fill="#fff"/><rect y="18" width="39" height="2" fill="#fff"/><rect y="22" width="39" height="2" fill="#fff"/><rect width="16" height="14" fill="#3C3B6E"/><g fill="#fff"><circle cx="2.5" cy="2.5" r="0.6"/><circle cx="6" cy="2.5" r="0.6"/><circle cx="9.5" cy="2.5" r="0.6"/><circle cx="13" cy="2.5" r="0.6"/><circle cx="4.25" cy="5" r="0.6"/><circle cx="7.75" cy="5" r="0.6"/><circle cx="11.25" cy="5" r="0.6"/><circle cx="2.5" cy="7.5" r="0.6"/><circle cx="6" cy="7.5" r="0.6"/><circle cx="9.5" cy="7.5" r="0.6"/><circle cx="13" cy="7.5" r="0.6"/><circle cx="4.25" cy="10" r="0.6"/><circle cx="7.75" cy="10" r="0.6"/><circle cx="11.25" cy="10" r="0.6"/><circle cx="2.5" cy="12.5" r="0.6"/><circle cx="6" cy="12.5" r="0.6"/><circle cx="9.5" cy="12.5" r="0.6"/><circle cx="13" cy="12.5" r="0.6"/></g></svg>VA Site Walk Network</h1>
-                <p class="tagline">Tracking EHRM construction procurement across every VA facility &mdash; serving those who served.</p>
+                <p class="tagline">Building smart spaces for those who took care of us.</p>
                 <div class="va-hero__stats">
                     <span class="stat"><b>{projects_n}</b> Projects</span>
                     <span class="dot">&middot;</span>
@@ -1203,11 +1203,12 @@ accelerate that timeline.
     st.divider()
 
     # ---------- Giving back ----------
-    st.header("Giving back to those who served")
+    st.header("Giving back to those who took care of us")
     st.markdown(
         """
-This project exists because of VA construction — work that ultimately serves
-the veterans who served us. It feels right to give something back.
+This project exists because of VA construction — work that ultimately builds
+the smart spaces caring for the veterans who took care of us. It feels right
+to give something back.
 
 **A portion of any revenue or donations this project receives goes to the
 [Wounded Warrior Project](https://www.woundedwarriorproject.org/)**, which
