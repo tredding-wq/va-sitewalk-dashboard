@@ -79,23 +79,6 @@ def _suggest_solicitation_url() -> str:
     return f"{GITHUB_ISSUES_URL}?{qs}"
 
 
-def _suggest_protest_url() -> str:
-    """Build a pre-filled GitHub Issue URL for suggesting a GAO protest."""
-    from urllib.parse import urlencode
-    title = "Suggest a GAO protest"
-    body = "\n".join([
-        "**GAO decision URL:**",
-        "<!-- https://www.gao.gov/products/b-xxxxxxx or link to the PDF -->",
-        "",
-        "**Docket number (if you have it):**",
-        "<!-- e.g. B-422701.2 -->",
-        "",
-        "**Why this one matters:**",
-        "<!-- e.g. it's a VA EHRM job, involves a company already in our directory, -->",
-        "<!-- changes SDVOSB status, etc. -->",
-    ])
-    qs = urlencode({"title": title, "body": body, "labels": "protest-suggestion"})
-    return f"{GITHUB_ISSUES_URL}?{qs}"
 
 st.markdown(
     f"""
@@ -476,37 +459,6 @@ def load_summary():
 
 
 @st.cache_data(ttl=300)
-def load_protests():
-    return query("""
-        SELECT docket_id, decision_url, decision_date, case_name, agency,
-               solicitation_number, protestor_name, protestor_company_id,
-               awardee_name, awardee_company_id, outcome, summary, added_by
-        FROM gao_protests
-        ORDER BY decision_date DESC NULLS LAST, docket_id
-    """)
-
-
-@st.cache_data(ttl=300)
-def load_protest_counts_by_company():
-    """Returns {company_id: {'as_protestor': n, 'as_awardee': n, 'last_date': date}}."""
-    df = query("""
-        SELECT protestor_company_id AS cid, 'protestor' AS role, decision_date
-          FROM gao_protests WHERE protestor_company_id IS NOT NULL
-        UNION ALL
-        SELECT awardee_company_id AS cid, 'awardee' AS role, decision_date
-          FROM gao_protests WHERE awardee_company_id IS NOT NULL
-    """)
-    out = {}
-    for _, row in df.iterrows():
-        cid = int(row["cid"])
-        d = out.setdefault(cid, {"as_protestor": 0, "as_awardee": 0, "last_date": None})
-        d[f"as_{row['role']}"] += 1
-        if row["decision_date"] and (d["last_date"] is None or str(row["decision_date"]) > str(d["last_date"])):
-            d["last_date"] = row["decision_date"]
-    return out
-
-
-@st.cache_data(ttl=300)
 def load_jv_members():
     return query("""
         SELECT jvm.jv_company_id, jvc.canonical_name AS jv_name,
@@ -531,7 +483,6 @@ page = st.sidebar.radio("Navigate", [
     "Attendees",
     "Companies",
     "Joint Ventures",
-    "Protests",
 ])
 
 st.sidebar.markdown(
@@ -575,20 +526,6 @@ st.sidebar.markdown(
                margin-bottom: 0.4rem;
            ">
             📋 Suggest a solicitation &rarr;
-        </a>
-        <a href="{_suggest_protest_url()}"
-           target="_blank" rel="noopener"
-           style="
-               display: block;
-               color: white !important;
-               text-decoration: none;
-               padding: 0.5rem 0.7rem;
-               font-size: 0.88rem;
-               font-weight: 600;
-               border-left: 3px solid {VA_GOLD};
-               margin-bottom: 0.4rem;
-           ">
-            ⚖️ Suggest a GAO protest &rarr;
         </a>
         <a href="https://github.com/tredding-wq/va-sitewalk-dashboard"
            target="_blank" rel="noopener"
@@ -1220,36 +1157,10 @@ elif page == "Companies":
     if selected_rows:
         idx = selected_rows[0]
         row = df.iloc[idx]
-        protest_counts = load_protest_counts_by_company()
-        pc = protest_counts.get(int(row["id"]), None)
         with st.container(border=True):
             header_l, header_r = st.columns([4, 1])
             with header_l:
-                protest_badge = ""
-                if pc:
-                    total = pc["as_protestor"] + pc["as_awardee"]
-                    protest_badge = (
-                        f"  <span style='background:#C8102E; color:white; padding:2px 8px; "
-                        f"border-radius:4px; font-size:0.72rem; font-weight:700;'>"
-                        f"⚖️ {total} GAO protest{'s' if total > 1 else ''}</span>"
-                    )
-                st.markdown(
-                    f"### {row['canonical_name']}{protest_badge}  —  Sites Visited",
-                    unsafe_allow_html=True,
-                )
-                if pc:
-                    protest_rows = load_protests()
-                    related = protest_rows[
-                        (protest_rows["protestor_company_id"] == int(row["id"]))
-                        | (protest_rows["awardee_company_id"] == int(row["id"]))
-                    ]
-                    for _, p in related.iterrows():
-                        role = "Protestor" if p["protestor_company_id"] == int(row["id"]) else "Awardee"
-                        st.caption(
-                            f"⚖️ **{p['docket_id']}** ({str(p['decision_date'])[:10] or 'date unknown'}) · "
-                            f"{role} · Outcome: `{p.get('outcome') or 'unknown'}` · "
-                            f"[Read decision]({p['decision_url']})"
-                        )
+                st.markdown(f"### {row['canonical_name']}  —  Sites Visited")
             with header_r:
                 fix_url = _suggest_fix_url(
                     "Company",
@@ -1315,108 +1226,6 @@ elif page == "Joint Ventures":
         jv_companies[["canonical_name", "primary_category", "times_seen",
                        "website", "sam_uei", "email_domains"]],
         use_container_width=True, height=400,
-    )
-
-
-# ------------------------------------------------------------------ #
-#  Protests
-# ------------------------------------------------------------------ #
-elif page == "Protests":
-    st.title("GAO Bid Protests")
-
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_RED} 100%);
-            color: white; padding: 1rem 1.25rem; border-radius: 10px;
-            margin-bottom: 1.2rem; border-left: 4px solid {VA_GOLD};
-        ">
-            <div style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem;">
-                Tracking VA-related GAO bid protests
-            </div>
-            <div style="font-size: 0.88rem; opacity: 0.95; line-height: 1.4;">
-                When a company protests a VA award at the Government Accountability Office,
-                the decision becomes public record. This page indexes those decisions and
-                links them back to the companies in this directory, so you can see who has
-                an active history of contesting or winning awards.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    protests = load_protests()
-    if protests.empty:
-        st.info(
-            "No protests in the directory yet. "
-            "Know one we should add? Use the 'Suggest a protest' link in the sidebar."
-        )
-    else:
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Protests tracked", len(protests))
-        c2.metric("Sustained", int((protests["outcome"] == "sustained").sum()))
-        c3.metric("Denied", int((protests["outcome"] == "denied").sum()))
-        c4.metric("Companies involved",
-                  int(protests["protestor_company_id"].notna().sum()
-                      + protests["awardee_company_id"].notna().sum()))
-
-        for _, row in protests.iterrows():
-            outcome_color = {
-                "sustained": "#2E7D32",
-                "denied": "#757575",
-                "dismissed": "#616161",
-                "withdrawn": "#9E9E9E",
-            }.get((row.get("outcome") or "").lower(), "#757575")
-            date_str = str(row.get("decision_date") or "")[:10]
-            with st.container(border=True):
-                hl, hr = st.columns([5, 1])
-                with hl:
-                    st.markdown(
-                        f"### {row['case_name'] or row['docket_id']}  "
-                        f"<span style='font-size:0.7em; color:#888; font-weight:normal;'>"
-                        f"{row['docket_id']}</span>",
-                        unsafe_allow_html=True,
-                    )
-                    badges = []
-                    if row.get("outcome"):
-                        badges.append(
-                            f"<span style='background:{outcome_color}; color:white; "
-                            f"padding:3px 9px; border-radius:4px; font-size:0.72rem; "
-                            f"font-weight:700; letter-spacing:0.05em; text-transform:uppercase;'>"
-                            f"{row['outcome']}</span>"
-                        )
-                    if date_str:
-                        badges.append(f"<span style='color:#555; font-size:0.82rem;'>{date_str}</span>")
-                    if row.get("agency"):
-                        badges.append(f"<span style='color:#555; font-size:0.82rem;'>{row['agency']}</span>")
-                    st.markdown(
-                        "&nbsp;&nbsp;·&nbsp;&nbsp;".join(badges),
-                        unsafe_allow_html=True,
-                    )
-                with hr:
-                    if row.get("decision_url"):
-                        st.link_button(
-                            "Read on GAO →", row["decision_url"],
-                            use_container_width=True,
-                        )
-                if row.get("summary"):
-                    st.markdown(row["summary"])
-                meta_bits = []
-                if row.get("protestor_name"):
-                    meta_bits.append(f"**Protestor:** {row['protestor_name']}")
-                if row.get("awardee_name"):
-                    meta_bits.append(f"**Awardee:** {row['awardee_name']}")
-                if row.get("solicitation_number"):
-                    meta_bits.append(f"**Solicitation:** `{row['solicitation_number']}`")
-                if meta_bits:
-                    st.caption("  ·  ".join(meta_bits))
-
-    st.divider()
-    st.subheader("Know of a protest we should add?")
-    st.markdown(
-        f"Paste a GAO decision URL and we'll parse it into the directory. "
-        f"[Suggest a protest]({_suggest_protest_url()})  ·  "
-        f"Example: a decision at `https://www.gao.gov/products/b-422701.2`"
     )
 
 
