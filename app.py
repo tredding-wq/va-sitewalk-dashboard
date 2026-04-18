@@ -24,6 +24,37 @@ VA_RED = "#C8102E"       # VA flagship red
 VA_GOLD = "#FFC72C"      # Accent
 USA_PALETTE = [VA_BLUE, VA_RED, VA_GOLD, "#4A7FA7", "#7A1F2B", "#F2F2F2"]
 
+# ---- Community contribution config ----
+GITHUB_ISSUES_URL = "https://github.com/tredding-wq/va-sitewalk-dashboard/issues/new"
+
+
+def _suggest_fix_url(kind: str, identifier: str, payload: dict) -> str:
+    """Build a pre-filled GitHub Issue URL for a row-level correction."""
+    from urllib.parse import urlencode
+    title = f"Fix: {kind} — {identifier}"
+    lines = [f"**Record type:** {kind}", f"**Identifier:** {identifier}", ""]
+    lines.append("**Current data:**")
+    lines.append("```")
+    for k, v in payload.items():
+        if v is None or (isinstance(v, str) and not v.strip()):
+            continue
+        lines.append(f"{k}: {v}")
+    lines.append("```")
+    lines.extend([
+        "",
+        "**What's wrong?**",
+        "<!-- e.g. wrong category, duplicate of another row, OCR misread name, missing JV partner -->",
+        "",
+        "**What should it be?**",
+        "<!-- e.g. correct legal name, correct category, link to merge into id=XXXX -->",
+        "",
+        "**Source / evidence (URL or note):**",
+        "<!-- e.g. company website, LinkedIn page, SAM.gov record -->",
+    ])
+    body = "\n".join(lines)
+    qs = urlencode({"title": title, "body": body, "labels": "data-correction"})
+    return f"{GITHUB_ISSUES_URL}?{qs}"
+
 st.markdown(
     f"""
     <style>
@@ -423,8 +454,48 @@ page = st.sidebar.radio("Navigate", [
 st.sidebar.markdown(
     f"""
     <div style="
-        margin-top: 2.5rem;
+        margin-top: 2rem;
         padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.15);
+    ">
+        <div style="
+            color: rgba(255,255,255,0.6) !important;
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        ">Help improve this</div>
+        <a href="{GITHUB_ISSUES_URL}?labels=feedback&title=Feedback%3A&body=%3C%21--%20What%20would%20you%20like%20to%20see%20fixed%2C%20added%2C%20or%20improved%3F%20--%3E"
+           target="_blank" rel="noopener"
+           style="
+               display: block;
+               color: white !important;
+               text-decoration: none;
+               padding: 0.5rem 0.7rem;
+               font-size: 0.88rem;
+               font-weight: 600;
+               border-left: 3px solid {VA_GOLD};
+               margin-bottom: 0.4rem;
+           ">
+            🛠️ Report an issue / suggest a fix &rarr;
+        </a>
+        <a href="https://github.com/tredding-wq/va-sitewalk-dashboard"
+           target="_blank" rel="noopener"
+           style="
+               display: block;
+               color: white !important;
+               text-decoration: none;
+               padding: 0.4rem 0.7rem;
+               font-size: 0.82rem;
+               font-weight: 500;
+               border-left: 3px solid rgba(255,255,255,0.3);
+               margin-bottom: 1.2rem;
+           ">
+            🐙 GitHub repo &rarr;
+        </a>
+    </div>
+    <div style="
+        padding-top: 0.6rem;
         border-top: 1px solid rgba(255,255,255,0.15);
     ">
         <div style="
@@ -696,10 +767,13 @@ elif page == "Attendees":
     c1.metric("Attendees", len(df))
     c2.metric("Multi-site (2+)", int((df["sites_display"] >= 2).sum()))
 
-    st.dataframe(
+    att_event = st.dataframe(
         df[["name", "email", "company_display", "times_seen",
             "sites_display", "stations_visited", "last_seen"]],
         use_container_width=True, height=600,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="attendees_df",
         column_config={
             "company_display": st.column_config.TextColumn("Company"),
             "times_seen": st.column_config.NumberColumn("Seen", format="%d"),
@@ -707,6 +781,36 @@ elif page == "Attendees":
             "stations_visited": st.column_config.TextColumn("Sites Visited", width="large"),
         },
     )
+
+    sel = att_event.selection.rows if att_event and att_event.selection else []
+    if sel:
+        row = df.iloc[sel[0]]
+        with st.container(border=True):
+            hl, hr = st.columns([4, 1])
+            with hl:
+                st.markdown(f"### {row['name']} — {row.get('company_display') or '(no company)'}")
+            with hr:
+                fix_url = _suggest_fix_url(
+                    "Attendee",
+                    row["name"],
+                    {
+                        "id": int(row["id"]) if "id" in row and not pd.isna(row.get("id")) else None,
+                        "name": row.get("name"),
+                        "email": row.get("email"),
+                        "organization": row.get("organization"),
+                        "company": row.get("company_display"),
+                        "times_seen": int(row["times_seen"]) if not pd.isna(row.get("times_seen")) else None,
+                    },
+                )
+                st.link_button("🛠️ Suggest a fix", fix_url, use_container_width=True)
+            st.caption(
+                f"Email: {row.get('email') or '—'}  ·  "
+                f"Sheets seen: {int(row.get('times_seen') or 0)}  ·  "
+                f"Sites: {int(row.get('sites_display') or 0)}"
+            )
+            stations = row.get("stations_visited") or ""
+            if stations:
+                st.markdown("**Sites visited:**  " + stations)
 
     st.subheader("Top Multi-Site Attendees")
     multi = df[df["sites_display"] >= 2].sort_values("sites_display", ascending=False).head(20)
@@ -786,7 +890,24 @@ elif page == "Companies":
         idx = selected_rows[0]
         row = df.iloc[idx]
         with st.container(border=True):
-            st.markdown(f"### {row['canonical_name']}  —  Sites Visited")
+            header_l, header_r = st.columns([4, 1])
+            with header_l:
+                st.markdown(f"### {row['canonical_name']}  —  Sites Visited")
+            with header_r:
+                fix_url = _suggest_fix_url(
+                    "Company",
+                    row["canonical_name"],
+                    {
+                        "id": int(row["id"]) if "id" in row and not pd.isna(row.get("id")) else None,
+                        "canonical_name": row.get("canonical_name"),
+                        "primary_category": row.get("primary_category"),
+                        "times_seen": int(row["times_seen"]) if not pd.isna(row.get("times_seen")) else None,
+                        "website": row.get("website"),
+                        "email_domains": row.get("email_domains"),
+                        "sam_uei": row.get("sam_uei"),
+                    },
+                )
+                st.link_button("🛠️ Suggest a fix", fix_url, use_container_width=True)
             sites_txt = row.get("sites_list") or ""
             sites = sorted({s.strip() for s in sites_txt.split(";") if s.strip()})
             if not sites:
