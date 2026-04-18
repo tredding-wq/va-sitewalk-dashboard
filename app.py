@@ -347,8 +347,14 @@ def load_companies():
     # VA Staff / USACE / Other Government attend every sitewalk by definition
     # (it's their sitewalk), so they'd dominate every list. Filter at the
     # source so they never appear on the public companies view or charts.
+    #
+    # JV/rep-network children (rollup_parent_id IS NOT NULL) are folded into
+    # their parent's sheets_with_jvs / reps_with_jvs counts and hidden from the
+    # public list to avoid double-counting -- e.g. Leviton's rep firms roll up
+    # to Leviton's totals, Richard Group's JVs roll up to Richard Group LLC.
     return query("""
-        SELECT kc.id, kc.canonical_name, kc.primary_category, kc.times_seen,
+        SELECT kc.id, kc.canonical_name, kc.primary_category,
+               COALESCE(NULLIF(kc.sheets_with_jvs, 0), kc.times_seen) AS times_seen,
                kc.email_domains, kc.website, kc.sam_uei, kc.sam_cage,
                kc.primary_naics, kc.certifications, kc.last_seen,
                COALESCE(kc.is_sdvosb_va_prime, 0) AS sdvosb_prime,
@@ -356,7 +362,8 @@ def load_companies():
                kc.sites_visited_text AS sites_list
         FROM known_companies kc
         WHERE kc.primary_category NOT IN ('VA Staff', 'USACE', 'Other Government')
-        ORDER BY kc.times_seen DESC
+          AND kc.rollup_parent_id IS NULL
+        ORDER BY COALESCE(NULLIF(kc.sheets_with_jvs, 0), kc.times_seen) DESC
     """)
 
 
@@ -756,12 +763,12 @@ elif page == "Companies":
             "canonical_name": st.column_config.TextColumn("Company", width="large"),
             "times_seen": st.column_config.NumberColumn(
                 "Seen",
-                help="Number of VA sign-in sheets this company appears on",
+                help="VA sign-in sheets this company appears on. For manufacturers and prime GCs, includes their rep network / JV partner attendance.",
                 format="%d",
             ),
             "sites_count": st.column_config.NumberColumn(
                 "Sites",
-                help="Distinct VA facilities visited. Click a row to see the full list.",
+                help="Distinct VA facilities visited (includes rep network / JV partners). Click a row to see the full list.",
                 format="%d",
             ),
             "sdvosb_prime": st.column_config.CheckboxColumn("SDVOSB"),
