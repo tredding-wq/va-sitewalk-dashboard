@@ -1091,37 +1091,51 @@ accelerate that timeline.
     st.header("⚠️ Data caveats — please read")
 
     st.warning(
-        "VA Sitewalk is a best-effort tool built on imperfect inputs. "
-        "Treat the directory as a starting point for research, not as a system of record."
+        "VA Site Walk Network is a best-effort tool built from public sign-in "
+        "sheets. Treat the directory as a starting point for research, not as a "
+        "system of record. If something looks off, use the Suggest a fix link on "
+        "any row."
     )
 
     with st.expander("📝 OCR is imperfect", expanded=True):
         st.markdown(
             """
-            Sign-in sheets are handwritten, often in pen, on clipboards, in the
-            rain. Even the best OCR misreads handwriting.
+            Sign-in sheets are handwritten — often in pen, on a clipboard, at a
+            site walk in the rain. No OCR engine reads handwriting perfectly.
 
             - Names, companies, phone numbers, and emails may contain **transcription errors**
-            - We flag low-confidence rows but do not drop them — reviewers can see the confidence score
-            - The **original scanned sheet** is linked on every record so you can verify against the source
-            - If you spot an error, **submit a correction** — it helps everyone
+            - The pipeline runs multiple OCR passes and falls back through several
+              engines to reduce error rate
+            - When a name looks suspicious (e.g. *"Tallow Construction"* vs the real
+              *"Tallon Construction"*) it gets cross-checked against public sources
+              before being merged
+            - **Some errors will still slip through** — when you spot one, the
+              "Suggest a fix" button on any row pre-fills a GitHub issue with the
+              record's data so corrections are easy
             """
         )
 
-    with st.expander("🏷️ Trade categories are best-effort", expanded=True):
+    with st.expander("🏷️ Categories are best-effort", expanded=True):
         st.markdown(
             """
-            Trade classifications (electrical, low-voltage, mechanical, structured
-            cabling, etc.) are assigned by a mix of keyword rules, SAM.gov NAICS
-            codes, and web-based inference. They are **directional, not authoritative**.
+            Each company is tagged with a primary category (General Contractor,
+            Electrical, Low Voltage, Manufacturer, Manufacturer Rep, Distributor,
+            etc.) based on a mix of SAM.gov NAICS codes and AI classification
+            against public sources. These are **directional, not authoritative**.
 
-            - A firm tagged "electrical" may also do low-voltage, controls, or other scopes
-            - Categories skew toward what a firm is *known for publicly*, not necessarily what
-              they bid on a given project
-            - NAICS codes on SAM.gov are self-reported and often broader than actual capabilities
-            - Multi-trade firms may appear under a primary category only
+            - A firm tagged "Electrical Contractor" may also do low-voltage,
+              controls, or other scopes
+            - NAICS codes on SAM.gov are self-reported and often broader than a
+              firm's actual day-to-day work
+            - Multi-trade firms appear under a single primary category — secondary
+              capabilities aren't surfaced today
+            - The **Manufacturer Rep** category is reserved for actual rep firms
+              representing specific product lines (e.g. Leviton's rep network),
+              not distributors like Anixter / WESCO / Graybar / Accu-Tech, which
+              get the **Distributor** tag
 
-            Use categories to narrow a search — then verify capabilities directly with the firm.
+            Use categories to narrow a search — then verify capabilities directly
+            with the firm.
             """
         )
 
@@ -1129,32 +1143,30 @@ accelerate that timeline.
         st.markdown(
             """
             A single real-world company can show up on site walk sheets under many
-            variations: *"ABC Electric,"* *"ABC Elec Co,"* *"ABC Electrical Inc."*
-            VA Sitewalk rolls these up to a canonical entity. Here's how:
+            variations: *"Richard Group,"* *"Richard Group LLC,"* *"RICHARD GROUP,"*
+            *"Bridger-National Richard Group JV."* The directory rolls those up so
+            you see one row, with the full history attached. Here's how:
 
-            **Step 1 — Normalization**
-            Strip punctuation, legal suffixes (Inc, LLC, Co, Corp), and whitespace.
-            Lowercase everything.
+            **Match on shared identifiers (high confidence)**
+            Rows that share a SAM.gov UEI, an email domain, or a website are
+            collapsed into one entity.
 
-            **Step 2 — Exact match on identifiers**
-            If two rows share a SAM.gov UEI, CAGE code, or a confirmed website
-            domain, they roll up immediately. High confidence.
+            **Fuzzy name match with online verification (medium confidence)**
+            Near-duplicate names are checked against public sources before being
+            merged. The system won't merge based on name similarity alone —
+            there has to be an external source confirming the match.
 
-            **Step 3 — Fuzzy name match**
-            Remaining rows are compared using string similarity (token-based) plus
-            a Google Search resolver that checks whether candidate variants resolve
-            to the same canonical business. Medium confidence — scored and reviewable.
-
-            **Step 4 — Geographic tiebreaker**
-            If two similar names appear with conflicting locations (e.g., "ABC
-            Electric" in OH vs. TX), they are **kept separate** unless evidence
-            links them (same parent, same UEI, etc.).
+            **JV and rep-network rollups**
+            For prime contractors (like Richard Group LLC) and manufacturers (like
+            Leviton), affiliated JV partners and rep firms roll up under the
+            parent so the prime gets credit for its network's site walk
+            attendance — without the JV row itself disappearing from the data.
 
             **What this means for you:**
-            - One company = one row in the directory, with all site walks rolled under it
-            - Attendance counts (*"walked 12 VA projects"*) are rollup-based
-            - **False merges are possible** — flag them and we'll split the record
-            - **False splits are possible** — flag them and we'll merge
+            - One company = one row, with all variant sign-ins folded together
+            - Attendance counts use distinct sign-in sheets (no double-counting)
+            - **False merges and false splits both happen** — the "Suggest a fix"
+              link on any row is the fastest way to get them corrected
             """
         )
 
@@ -1174,13 +1186,17 @@ accelerate that timeline.
     with st.expander("🔒 Privacy and contact info"):
         st.markdown(
             """
-            Names, phone numbers, and emails are published as they appeared on
-            public pre-bid sign-in sheets — documents that are part of federal
-            solicitation records.
+            Names, phone numbers, and emails on this dashboard came from public
+            pre-bid site walk sign-in sheets that are part of federal solicitation
+            records on SAM.gov.
 
+            - Entity verification cross-checks records against publicly available
+              sources (company websites, public business registries, government
+              contract records). It does not scrape data behind logins.
             - Individuals can request removal at any time
-            - We do not scrape private databases, LinkedIn, or paid contact providers
-            - If you believe a record violates your privacy, contact us and we will remove it
+            - If you believe a record violates your privacy, use the "Suggest a
+              fix" link or the sidebar's "Report an issue" link and the record
+              will be removed
             """
         )
 
@@ -1190,8 +1206,8 @@ accelerate that timeline.
     st.header("Principles")
     st.markdown(
         """
-- **Accuracy over volume.** Low-confidence OCR rows are flagged for review,
-  not silently published.
+- **Accuracy over volume.** Suspect rows are cross-checked against public
+  sources before being merged or reclassified — no name-only guesses.
 - **Respect for the people in the data.** Contact info is published as it
   appeared on public sign-in sheets; removal requests are honored.
 - **Free and open.** No paywalls, no gated features, no data resale.
