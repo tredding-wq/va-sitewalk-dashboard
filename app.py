@@ -1219,9 +1219,8 @@ accelerate that timeline.
     st.header("Giving back to those who took care of us")
     st.markdown(
         """
-This project exists because of VA construction — work that ultimately builds
-the smart spaces caring for the veterans who took care of us. It feels right
-to give something back.
+This project exists to support the people building smart spaces for the
+veterans who took care of us. It feels right to give something back.
 
 **A portion of any revenue or donations this project receives goes to the
 [Wounded Warrior Project](https://www.woundedwarriorproject.org/)**, which
