@@ -381,7 +381,7 @@ def load_attendees():
                ka.times_seen, ka.site_walks_attended,
                s.sites_visited, s.stations_visited,
                pj.projects_attended, pj.project_numbers,
-               ka.first_seen_site, ka.last_seen_site, ka.last_seen,
+               ka.first_seen_site, ka.last_seen_site, ka.last_sitewalk_date AS last_seen,
                kc.canonical_name AS company
         FROM known_attendees ka
         LEFT JOIN known_companies kc ON kc.id = ka.company_id
