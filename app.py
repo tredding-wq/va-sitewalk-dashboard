@@ -845,7 +845,26 @@ elif page == "Joint Ventures":
 # ------------------------------------------------------------------ #
 elif page == "About":
     st.title("About VA Sitewalk")
-    st.caption("An open-source project to make construction projects run more smoothly — and to connect the best people in the industry.")
+    st.markdown(
+        f"""
+        <div style="
+            display: inline-block;
+            background: linear-gradient(135deg, {VA_BLUE} 0%, {VA_RED} 100%);
+            color: white;
+            padding: 0.65rem 1.2rem;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 0.4rem 0 1.2rem 0;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+            border-left: 4px solid {VA_GOLD};
+        ">
+            An open-source project to make construction projects run more smoothly &mdash; and to connect the best people in the industry.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 
