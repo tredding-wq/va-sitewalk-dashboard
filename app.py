@@ -465,13 +465,13 @@ def load_jv_members():
 # ------------------------------------------------------------------ #
 st.sidebar.title("VA Site Walk Network")
 page = st.sidebar.radio("Navigate", [
+    "About",
     "Overview",
     "Sites",
     "Projects",
     "Attendees",
     "Companies",
     "Joint Ventures",
-    "About",
 ])
 
 st.sidebar.markdown(
