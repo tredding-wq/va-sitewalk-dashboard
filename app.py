@@ -402,6 +402,7 @@ def load_attendees():
             JOIN projects p ON p.id = ap.project_id
             GROUP BY ap.attendee_id
         ) pj ON pj.attendee_id = ka.id
+        WHERE LOWER(COALESCE(ka.email, '')) NOT LIKE '%@va.gov'
         ORDER BY ka.times_seen DESC
     """)
 
